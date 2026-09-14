@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Mirror pinned production baseline
+      - name: Copy pinned production snapshot
         shell: bash
         run: |
           set -euo pipefail
@@ -27,5 +27,13 @@ jobs:
           git remote add production https://github.com/litewolf2026/Heldenmobil.git
           git fetch --no-tags production main
           git cat-file -e 18077dc9817b21da4a30073cfbc9a558436a85ff^{commit}
-          git reset --hard 18077dc9817b21da4a30073cfbc9a558436a85ff
-          git push --force origin HEAD:main
+          git archive 18077dc9817b21da4a30073cfbc9a558436a85ff | tar -x -C .
+          rm -f .github/workflows/ci.yml
+          rm -f .bootstrap
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Production snapshot already present."
+          else
+            git commit -m "Import HeldenMobil v20.3.2 production snapshot"
+            git push origin HEAD:main
+          fi
