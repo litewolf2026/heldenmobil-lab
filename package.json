@@ -3,6 +3,6 @@
   "private": true,
   "version": "20.3.2",
   "scripts": {
-    "test": "node tests/smoke.mjs && node tests/core.mjs && node tests/lab-isolation.mjs"
+    "test": "node tests/smoke.mjs && node tests/core.mjs && node tests/dsa41-rule-core.mjs && node tests/lab-isolation.mjs"
   }
 }
