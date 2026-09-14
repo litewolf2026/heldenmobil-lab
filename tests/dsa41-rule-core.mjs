@@ -23,6 +23,8 @@ eq(check.checkTalent({values:[10,10,10],skill:3,rolls:[1,1,20]}).outcome,'critic
 
 eq(check.checkAttribute({value:10,modifier:0,roll:10}).success,true,'attribute exact target');eq(check.checkAttribute({value:10,modifier:0,roll:11}).success,false,'attribute above target');
 eq(combat.adjustCombatForBE(15,14,3),{at:14,pa:12},'existing odd eBE distribution retained');eq(combat.finalDamage([1,6,2],[11,4],15),[1,6,3],'existing TP/KK retained');eq(combat.attackCheck({target:16,modifier:3,roll:13}).success,true,'AT check uses difficulty');eq(combat.parryCheck({target:14,modifier:2,roll:13}).success,false,'PA check uses difficulty');
+r=combat.attackCheck({target:25,roll:20});eq([r.success,r.requiresConfirmation,r.confirmationKind],[false,true,'fumble'],'natural 20 never succeeds even above target');
+r=combat.attackCheck({target:0,roll:1});eq([r.success,r.requiresConfirmation,r.confirmationKind],[true,true,'critical-success'],'natural 1 succeeds and requires confirmation');
 
 eq(damage.damageAfterArmor(11,5),{tp:11,rs:5,sp:6},'TP-RS-SP');eq(damage.damageAfterArmor(4,9).sp,0,'armor floors SP at zero');eq(damage.directDamage(7),{tp:null,rs:null,sp:7,direct:true},'direct SP bypasses RS');
 
