@@ -1,0 +1,31 @@
+name: Bootstrap HeldenMobil Lab from production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror-production-baseline:
+    if: github.repository == 'litewolf2026/heldenmobil-lab'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lab bootstrap
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror pinned production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add production https://github.com/litewolf2026/Heldenmobil.git
+          git fetch --no-tags production main
+          git cat-file -e 18077dc9817b21da4a30073cfbc9a558436a85ff^{commit}
+          git reset --hard 18077dc9817b21da4a30073cfbc9a558436a85ff
+          git push --force origin HEAD:main
