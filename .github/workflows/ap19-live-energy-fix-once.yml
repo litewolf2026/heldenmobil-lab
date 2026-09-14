@@ -1,0 +1,41 @@
+name: AP19.3b one-shot energy safety patch
+
+on:
+  push:
+    branches:
+      - ap19-live-provider-v1
+
+permissions:
+  contents: write
+
+jobs:
+  patch-energy-state:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ap19-live-provider-v1
+          fetch-depth: 0
+      - name: Do not infer live resources for non-current heroes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('js/app.js')
+          s=p.read_text(encoding='utf-8')
+          old="""function bridgeEnergyState(hero){\n  const maxima=new Map(deriveBasis(hero.props).map(item=>[item.name,Number(item.value)]));\n  const live=state.current?.key===hero.key?activeAdventureStatus():null,out={};"""
+          new="""function bridgeEnergyState(hero){\n  if(state.current?.key!==hero.key)return {};\n  const maxima=new Map(deriveBasis(hero.props).map(item=>[item.name,Number(item.value)]));\n  const live=activeAdventureStatus(),out={};"""
+          if old not in s:
+              raise SystemExit('energy binding anchor not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/ap19-live-energy-fix-once.yml
+      - name: Commit safety patch
+        shell: bash
+        run: |
+          git config user.name "Litewolf AP19 automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add js/app.js .github/workflows/ap19-live-energy-fix-once.yml
+          git commit -m "AP19.3b: avoid inferred live resources for inactive heroes"
+          git push origin HEAD:ap19-live-provider-v1
