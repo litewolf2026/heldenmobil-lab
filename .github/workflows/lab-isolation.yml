@@ -1,0 +1,95 @@
+name: HeldenMobil Lab Isolation Bootstrap
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  isolate-lab:
+    if: github.repository == 'litewolf2026/heldenmobil-lab'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Isolate lab data and mark UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          app_path=Path('js/app.js')
+          app=app_path.read_text(encoding='utf-8')
+          if 'heldenmobil-lab:' not in app:
+              assert 'heldenmobil:' in app, 'production storage namespace not found'
+              app=app.replace('heldenmobil:', 'heldenmobil-lab:')
+          app=app.replace("COMPANION_BACKUP_DB='HeldenMobilBackups'", "COMPANION_BACKUP_DB='HeldenMobilLabBackups'")
+          if 'const HELDENMOBIL_LAB_MODE=true;' not in app:
+              marker="  const CLOUD_CONFIG_KEY='heldenmobil-lab:onedrive:config:v1';"
+              assert marker in app, 'cloud config marker not found'
+              app=app.replace(marker, "  const HELDENMOBIL_LAB_MODE=true;\n"+marker, 1)
+          old="function cloudCapable(){return location.protocol==='https:'||(location.protocol==='http:'&&['localhost','127.0.0.1','::1'].includes(location.hostname));}"
+          new="function cloudCapable(){return !HELDENMOBIL_LAB_MODE&&(location.protocol==='https:'||(location.protocol==='http:'&&['localhost','127.0.0.1','::1'].includes(location.hostname)));}"
+          app=app.replace(old,new)
+          app=app.replace("function cloudCompanionFileName(heroKey){return `hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}", "function cloudCompanionFileName(heroKey){return `lab-hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}")
+          app=app.replace("if(!cloudCapable()){cloudMessage('OneDrive-Anmeldung funktioniert aus Sicherheitsgründen nicht aus einer file://-Datei. Bitte HeldenMobil über HTTPS oder localhost öffnen.','error');return;}", "if(!cloudCapable()){cloudMessage(HELDENMOBIL_LAB_MODE?'HeldenMobil LAB: OneDrive ist absichtlich deaktiviert, damit keine Produktivdaten verändert werden.':'OneDrive-Anmeldung funktioniert aus Sicherheitsgründen nicht aus einer file://-Datei. Bitte HeldenMobil über HTTPS oder localhost öffnen.','error');return;}")
+          app_path.write_text(app,encoding='utf-8')
+
+          idx_path=Path('index.html')
+          idx=idx_path.read_text(encoding='utf-8')
+          idx=idx.replace('<title>HeldenMobil – HLD PoC v20.3.2</title>','<title>HeldenMobil LAB – HLD PoC v20.3.2</title>')
+          if '.lab-banner{' not in idx:
+              idx=idx.replace('header{display:flex;', '.lab-banner{position:sticky;top:0;z-index:9999;margin:0 0 14px;padding:8px 12px;border:1px solid #a46161;border-radius:10px;background:#361d1d;color:#ffd4d4;font-size:.78rem;font-weight:800;text-align:center;letter-spacing:.035em}\\nheader{display:flex;',1)
+          if 'HELDENMOBIL LAB · EXPERIMENTAL' not in idx:
+              m=re.search(r'<body[^>]*>',idx,re.I)
+              assert m, 'body tag not found'
+              banner='\\n<div class="lab-banner">HELDENMOBIL LAB · EXPERIMENTAL · getrennte Browserdaten · OneDrive deaktiviert</div>'
+              idx=idx[:m.end()]+banner+idx[m.end():]
+          idx_path.write_text(idx,encoding='utf-8')
+
+          readme_path=Path('README.md')
+          readme=readme_path.read_text(encoding='utf-8')
+          notice='> **HeldenMobil LAB** – experimenteller Entwicklungszweig auf Basis von HeldenMobil v20.3.2. Browserdaten und Backups sind vom Produktivsystem getrennt; OneDrive ist im Lab zunächst deaktiviert.\\n\\n'
+          if not readme.startswith('> **HeldenMobil LAB**'):
+              readme=notice+readme
+          readme_path.write_text(readme,encoding='utf-8')
+
+          pkg_path=Path('package.json')
+          pkg=json.loads(pkg_path.read_text(encoding='utf-8'))
+          pkg['name']='heldenmobil-lab'
+          pkg['scripts']['test']='node tests/smoke.mjs && node tests/core.mjs && node tests/lab-isolation.mjs'
+          pkg_path.write_text(json.dumps(pkg,ensure_ascii=False,indent=2)+'\\n',encoding='utf-8')
+
+          Path('tests/lab-isolation.mjs').write_text(r'''import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const app=fs.readFileSync('js/app.js','utf8');
+const index=fs.readFileSync('index.html','utf8');
+assert.match(app,/heldenmobil-lab:/);
+assert.doesNotMatch(app,/['"`]heldenmobil:/);
+assert.match(app,/HeldenMobilLabBackups/);
+assert.match(app,/const HELDENMOBIL_LAB_MODE=true;/);
+assert.match(app,/return !HELDENMOBIL_LAB_MODE/);
+assert.match(app,/lab-hero-/);
+assert.match(index,/HeldenMobil LAB/);
+assert.match(index,/HELDENMOBIL LAB · EXPERIMENTAL/);
+console.log('lab-isolation: OK');
+''',encoding='utf-8')
+          PY
+          npm test
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/app.js index.html README.md package.json tests/lab-isolation.mjs
+          if git diff --cached --quiet; then
+            echo "Lab isolation already applied."
+          else
+            git commit -m "Lab: isolate browser data and disable production cloud sync"
+            git push origin HEAD:main
+          fi
