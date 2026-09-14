@@ -7,6 +7,7 @@ const wounds=require('../js/dsa41/wound-core.js');
 const conditions=require('../js/dsa41/condition-core.js');
 const maneuvers=require('../js/dsa41/maneuver-core.js');
 const magic=require('../js/dsa41/magic-core.js');
+const effects=require('../js/dsa41/effect-core.js');
 const hldCoverage=JSON.parse(fs.readFileSync(new URL('./fixtures/hld-ap19-coverage.json',import.meta.url),'utf8'));
 
 function eq(actual,expected,label){const a=JSON.stringify(actual),e=JSON.stringify(expected);if(a!==e)throw new Error(`${label}: expected ${e}, got ${a}`);}
@@ -78,5 +79,11 @@ eq(magic.spellCost({plannedCost:5,success:false,representation:'Satuarisch'}).co
 eq(magic.repeatFailureModifier({failedAttempts:2}),6,'repeat failed spell +3 per prior failure');
 eq(magic.repeatFailureModifier({failedAttempts:2,hasZauberroutine:true}),0,'Zauberroutine suppresses repeat penalty');
 eq([magic.forceSpellEffectCost(1),magic.forceSpellEffectCost(2),magic.forceSpellEffectCost(3),magic.forceSpellEffectCost(4)],[1,2,4,8],'Erzwingen AsP progression');
+
+// Generic effect contract keeps later spell/SF automation bridge-safe without pretending every effect is modeled.
+let fx=effects.modifierEffect({source:'test-spell',stat:'RS',value:3,duration:{rounds:5}});eq([fx.type,fx.payload.stat,fx.payload.value],['modifier','RS',3],'generic modifier effect');
+fx=effects.damageEffect({source:'test-spell',amount:7,kind:'SP'});eq([fx.type,fx.payload.amount,fx.requiresConfirmation],['damage',7,true],'generic damage effect');
+fx=effects.resourceEffect({source:'test-spell',resource:'AsP',delta:-5});eq([fx.type,fx.payload.resource,fx.payload.delta],['resource','AsP',-5],'generic resource effect');
+eq(effects.manualEffect({source:'unmodeled-spell'}).type,'manual','unmodeled spell stays explicit manual effect');
 
 console.log('AP19.1b DSA 4.1 coverage regression tests passed');
