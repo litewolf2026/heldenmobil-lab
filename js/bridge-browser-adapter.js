@@ -56,13 +56,15 @@
   }
   function bridgeError(code,message,details=null){return {code:String(code),message:String(message),details:details==null?null:clone(details)};}
 
-  function createBridgeServer({allowedOrigins=[],allowedCapabilities=Object.values(CAPABILITIES),provider=null}={}){
+  function createBridgeServer({allowedOrigins=[],allowedCapabilities=Object.values(CAPABILITIES),provider=null,sourceGuard=null}={}){
     const origins=normalizeOrigins(allowedOrigins),enabled=normalizeCapabilities(allowedCapabilities);
+    if(sourceGuard!=null&&typeof sourceGuard!=='function')throw new TypeError('sourceGuard must be a function or null');
     let currentProvider=provider;
 
     function capabilities(){return providerCapabilities(currentProvider,enabled);}
     function setProvider(next){if(next!=null&&!plain(next))throw new TypeError('provider must be an object or null');currentProvider=next;return capabilities();}
     function originAllowed(origin){return origins.has(String(origin||''));}
+    function sourceAllowed(event){return sourceGuard?!!sourceGuard(event):true;}
     function post(event,response){
       if(!event?.source||typeof event.source.postMessage!=='function')return false;
       event.source.postMessage(response,event.origin);
@@ -109,6 +111,7 @@
     async function handleMessage(event){
       const request=requestEnvelope(event?.data);if(!request)return {handled:false,reason:'not-bridge-message'};
       if(!originAllowed(event?.origin))return {handled:false,reason:'origin-rejected'};
+      if(!sourceAllowed(event))return {handled:false,reason:'source-rejected'};
       if(request.version!==TRANSPORT_VERSION){
         const response=responseEnvelope(request,'bridge.error',{error:bridgeError('UNSUPPORTED_TRANSPORT_VERSION',`Unsupported transport version: ${request.version}`)});post(event,response);return {handled:true,response};
       }
@@ -117,12 +120,12 @@
       catch(error){dispatched={type:'bridge.error',error:bridgeError('PROVIDER_ERROR',error?.message||String(error))};}
       const response=responseEnvelope(request,dispatched.type,{payload:dispatched.payload??null,error:dispatched.error??null});post(event,response);return {handled:true,response};
     }
-    return {channel:CHANNEL,transportVersion:TRANSPORT_VERSION,capabilities,setProvider,handleMessage,originAllowed};
+    return {channel:CHANNEL,transportVersion:TRANSPORT_VERSION,capabilities,setProvider,handleMessage,originAllowed,sourceAllowed};
   }
 
-  function installWindowBridge({windowRef,allowedOrigins=[],allowedCapabilities=Object.values(CAPABILITIES),provider=null}={}){
+  function installWindowBridge({windowRef,allowedOrigins=[],allowedCapabilities=Object.values(CAPABILITIES),provider=null,sourceGuard=null}={}){
     const target=windowRef||(typeof window!=='undefined'?window:null);if(!target||typeof target.addEventListener!=='function')throw new Error('window-like target is required');
-    const server=createBridgeServer({allowedOrigins,allowedCapabilities,provider});
+    const server=createBridgeServer({allowedOrigins,allowedCapabilities,provider,sourceGuard});
     const listener=event=>{server.handleMessage(event).catch(()=>{});};
     target.addEventListener('message',listener);
     return {server,dispose:()=>target.removeEventListener?.('message',listener)};

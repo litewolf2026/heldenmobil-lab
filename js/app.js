@@ -1340,4 +1340,52 @@
   const dz=$('#dropzone');['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')}));dz.addEventListener('drop',e=>openFile(e.dataTransfer.files[0],{source:'local'}));
   cloudInit();
   const demo=new URLSearchParams(location.search).get('demo');if(demo&&!new URLSearchParams(location.search).has('code')){fetch(demo).then(r=>{if(!r.ok)throw new Error('Demo-Datei nicht erreichbar');return r.blob();}).then(b=>openFile(new File([b],demo.split('/').pop()||'helden.hld'),{source:'demo'})).catch(err=>status('Demo-Fehler: '+err.message,'error'));}
+
+// AP19.3b live bridge provider binding
+function bridgeParsedHeroes(){
+  return (state.heroes||[]).map(raw=>state.current?.key===raw.key?state.current:parseHero(raw));
+}
+function bridgeEnergyState(hero){
+  if(state.current?.key!==hero.key)return {};
+  const maxima=new Map(deriveBasis(hero.props).map(item=>[item.name,Number(item.value)]));
+  const live=activeAdventureStatus(),out={};
+  for(const label of ['LeP','AuP','AsP','KaP']){
+    if(!maxima.has(label))continue;
+    const max=Math.max(0,Number(maxima.get(label))||0),statusKey=statusKeyFor(label);
+    const rawCurrent=live&&statusKey&&live[statusKey]!=null?Number(live[statusKey]):max;
+    out[label]={current:Math.max(0,Math.min(max,Number.isFinite(rawCurrent)?rawCurrent:max)),max};
+  }
+  return out;
+}
+function bridgeCombatState(hero){
+  const pm=propMap(hero.props),out={
+    atBasis:currentAttr(pm,'at'),paBasis:currentAttr(pm,'pa'),fkBasis:currentAttr(pm,'fk'),iniBase:currentAttr(pm,'ini'),
+    combatTalents:(hero.combat||[]).map(row=>({name:row.name,at:row.at,pa:row.pa}))
+  };
+  if(state.current?.key===hero.key){
+    const set=hero.combatSets?.[state.combatSet]||hero.combatSets?.[0];
+    if(set){const armor=setArmor(set);out.rs=armor.rs;out.be=armor.be;out.armorZones=armor.zones;}
+  }
+  return out;
+}
+function bridgeSourceGuard(event){
+  const fromOpener=!!window.opener&&event.source===window.opener;
+  const fromParent=window.parent&&window.parent!==window&&event.source===window.parent;
+  return !!(fromOpener||fromParent);
+}
+if(typeof HeldenMobilBridgeProviderV1!=='undefined'&&typeof HeldenMobilBrowserBridgeV1!=='undefined'){
+  const bridgeProvider=HeldenMobilBridgeProviderV1.createProvider({
+    getHeroes:bridgeParsedHeroes,
+    getEnergyState:bridgeEnergyState,
+    getCombatState:bridgeCombatState,
+    rollDie:secureDie
+  });
+  window.HeldenMobilBridgeSessionV1=HeldenMobilBrowserBridgeV1.installWindowBridge({
+    allowedOrigins:[window.location.origin],
+    allowedCapabilities:['hero:list','hero:snapshot:v1','check:execute:v1'],
+    provider:bridgeProvider,
+    sourceGuard:bridgeSourceGuard
+  });
+}
+
 })();

@@ -12,6 +12,7 @@ function source(){const calls=[];return {calls,postMessage:(message,origin)=>cal
 function event({origin='https://maze.example',messageId='m1',type='bridge.hello',payload={},version=1,sourceRef=source()}={}){return {origin,source:sourceRef,data:{channel:browserBridge.CHANNEL,version,messageId,type,payload}};}
 
 throws(()=>browserBridge.createBridgeServer({allowedOrigins:['*']}),'wildcard origins are forbidden');
+throws(()=>browserBridge.createBridgeServer({allowedOrigins:['https://maze.example'],sourceGuard:true}),'source guard must be a function');
 
 let listCalls=0,getCalls=0,checkCalls=0,combatCalls=0;
 const provider={
@@ -26,6 +27,11 @@ eq(server.capabilities(),['check:execute:v1','combat:execute:v1','hero:list','he
 
 let src=source();let ev=event({origin:'https://evil.example',sourceRef:src});let handled=await server.handleMessage(ev);
 eq([handled.handled,handled.reason,src.calls.length,listCalls],[false,'origin-rejected',0,0],'untrusted origin is silently ignored');
+
+const trustedSource=source(),otherSource=source();
+const sourceLocked=browserBridge.createBridgeServer({allowedOrigins:['https://maze.example'],provider,sourceGuard:event=>event.source===trustedSource});
+ev=event({sourceRef:otherSource});handled=await sourceLocked.handleMessage(ev);eq([handled.handled,handled.reason,otherSource.calls.length],[false,'source-rejected',0],'same-origin but wrong source window is rejected');
+ev=event({sourceRef:trustedSource});handled=await sourceLocked.handleMessage(ev);eq(handled.response.type,'bridge.hello.result','allowed source window passes second gate');
 
 src=source();ev=event({sourceRef:src,payload:{capabilities:['hero:list','check:execute:v1','unknown']}});handled=await server.handleMessage(ev);
 eq(handled.response.type,'bridge.hello.result','hello succeeds');
@@ -63,4 +69,4 @@ eq([handled.response.type,handled.response.error.code],['bridge.error','PROVIDER
 let listener=null;const fakeWindow={addEventListener:(name,fn)=>{if(name==='message')listener=fn;},removeEventListener:(name,fn)=>{if(name==='message'&&listener===fn)listener=null;}};
 const installed=browserBridge.installWindowBridge({windowRef:fakeWindow,allowedOrigins:['https://maze.example'],provider});ok(typeof listener==='function','window adapter installs one message listener');installed.dispose();eq(listener,null,'window adapter disposes listener');
 
-console.log('AP19.3 browser bridge origin/capability regression tests passed');
+console.log('AP19.3 browser bridge origin/capability/source-window regression tests passed');
