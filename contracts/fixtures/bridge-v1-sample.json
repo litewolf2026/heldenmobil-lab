@@ -1,0 +1,69 @@
+{
+  "hero": {
+    "schema": "HeroSnapshotV1",
+    "version": 1,
+    "heroId": "hero:fixture:1",
+    "name": "Fixture-Held",
+    "attributes": {"MU": 13, "KL": 12, "IN": 14, "CH": 11, "FF": 10, "GE": 15, "KO": 13, "KK": 14},
+    "energies": {"LeP": {"current": 31, "max": 35}, "AuP": {"current": 36, "max": 40}, "AsP": {"current": 22, "max": 28}},
+    "talents": [{"key": "Sinnesschärfe", "name": "Sinnesschärfe", "value": 11, "attributes": ["KL", "IN", "IN"]}],
+    "spells": [{"key": "Odem Arcanum", "name": "Odem Arcanum", "value": 9, "attributes": ["KL", "IN", "IN"], "representation": "Mag", "complexity": "A"}],
+    "combat": {"atBasis": 8, "paBasis": 8, "fkBasis": 8, "iniBase": 12, "rs": 3, "be": 1},
+    "capabilities": ["check:talent", "check:spell", "combat:basic"],
+    "display": {"portraitRef": "portrait:fixture"},
+    "source": {"product": "heldenmobil-lab", "heroRevision": "fixture-1"}
+  },
+  "checkRequest": {
+    "schema": "CheckRequestV1",
+    "version": 1,
+    "requestId": "req:fixture:1",
+    "heroId": "hero:fixture:1",
+    "check": {"kind": "talent", "key": "Sinnesschärfe", "label": "Sinnesschärfe", "mode": "standard"},
+    "modifier": 3,
+    "modifiers": [{"source": "shared-maze", "value": 3, "reason": "verborgene Falle", "kind": "difficulty"}],
+    "context": {"source": "shared-maze", "entityRef": "trap:fixture", "hiddenRoll": true}
+  },
+  "checkResult": {
+    "schema": "CheckResultV1",
+    "version": 1,
+    "requestId": "req:fixture:1",
+    "heroId": "hero:fixture:1",
+    "checkKind": "talent",
+    "status": "resolved",
+    "success": true,
+    "outcome": "success",
+    "qualityPoints": 6,
+    "rolls": [7, 12, 9],
+    "targets": [12, 14, 14],
+    "effectiveValue": 8,
+    "modifiers": [{"source": "shared-maze", "value": 3, "reason": "verborgene Falle", "kind": "difficulty"}],
+    "effects": [{"type": "manual", "source": "Sinnesschärfe", "target": "target", "payload": {"reason": "Dungeonwirkung wird durch Shared Maze/SL aufgelöst"}, "duration": null, "requiresConfirmation": true}],
+    "resourceDeltas": [],
+    "display": {"summary": "Gelungen · 6 TaP*"},
+    "meta": {"ruleCore": "dsa41-v1"}
+  },
+  "resourceDelta": {
+    "schema": "ResourceDeltaV1",
+    "version": 1,
+    "resource": "AsP",
+    "current": 12,
+    "delta": -5,
+    "next": 7,
+    "allowed": true,
+    "reason": "Zauberkosten",
+    "source": "magic-core"
+  },
+  "combatAction": {
+    "schema": "CombatActionV1",
+    "version": 1,
+    "actionId": "combat:fixture:1",
+    "heroId": "hero:fixture:1",
+    "kind": "attack",
+    "targetRef": "actor:goblin",
+    "weaponRef": "weapon:sword",
+    "maneuvers": [{"key": "Wuchtschlag", "announcement": 3}],
+    "modifier": 0,
+    "context": {"runId": "run:fixture"},
+    "payload": {}
+  }
+}
