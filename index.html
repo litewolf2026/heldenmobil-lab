@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171a1f">
+<title>HeldenMobil – HLD PoC v20.3.2</title>
+<style>
+:root{
+  --bg:#0e1014;--panel:#171a1f;--panel2:#20242b;--line:#303641;--text:#eef1f5;--muted:#aeb7c5;
+  --accent:#d7aa55;--accent2:#f0c979;--ok:#7ccf9a;--warn:#e7b76a;--danger:#ec8585;
+  color-scheme:dark;
+}
+*{box-sizing:border-box} html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+body{background:radial-gradient(circle at top right,#1f232b 0,#0e1014 38rem)}
+button,input,select{font:inherit}
+.app{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:12px}.sigil{width:44px;height:44px;border:1px solid #806b42;border-radius:50%;display:grid;place-items:center;color:var(--accent2);font-size:22px;background:#17191d;box-shadow:inset 0 0 0 5px #121419}
+h1{font-size:1.35rem;margin:0}.sub{color:var(--muted);font-size:.86rem;margin-top:2px}.badge{font-size:.74rem;border:1px solid #5f5135;color:var(--accent2);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.panel{background:rgba(23,26,31,.94);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 45px rgba(0,0,0,.2)}
+.loader{padding:22px}.drop{border:1px dashed #5b6574;border-radius:12px;padding:28px 18px;text-align:center;background:#12151a;transition:.15s}.drop.drag{border-color:var(--accent);background:#181712}.drop strong{display:block;font-size:1.05rem;margin-bottom:7px}.drop p{margin:0 0 16px;color:var(--muted);font-size:.9rem}.filebtn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#17130c;border:0;border-radius:9px;padding:10px 14px;font-weight:750;cursor:pointer}.filebtn:hover{background:var(--accent2)}#fileInput{display:none}.privacy{margin-top:13px;color:#84909f;font-size:.78rem}
+.status{display:none;margin-top:13px;padding:10px 12px;border-radius:9px;background:#12151a;color:var(--muted);font-size:.85rem}.status.error{display:block;color:#ffd0d0;border:1px solid #613838}.status.ok{display:block;color:#bceacb;border:1px solid #345b42}
+.workspace{display:block;margin-top:18px}.workspace:not(.has-hero) .hero-only,.workspace:not(.has-hero) .hero-data-only{display:none}.tab:disabled{opacity:.42;cursor:not-allowed}.toolbar{padding:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.toolbar label{font-size:.78rem;color:var(--muted)}.hero-select{min-width:260px;max-width:100%;background:#111419;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 11px}.fileinfo{margin-left:auto;color:var(--muted);font-size:.8rem}.readonly{padding:9px 14px;border-top:1px solid var(--line);color:#dec791;font-size:.8rem;background:#191811;border-radius:0 0 14px 14px}
+.herohead{margin-top:18px;padding:20px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start}.herohead h2{font-size:1.6rem;margin:0 0 6px}.meta{color:var(--muted);font-size:.92rem}.apbox{display:grid;grid-template-columns:repeat(2,minmax(90px,1fr));gap:8px}.metric{background:#111419;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:right}.metric .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.metric .value{font-size:1.18rem;font-weight:750;margin-top:2px}
+.tabs{margin-top:18px;display:flex;gap:7px;overflow-x:auto;padding:4px 2px 8px}.tab{border:1px solid var(--line);background:#15181d;color:var(--muted);border-radius:9px;padding:9px 12px;cursor:pointer;white-space:nowrap}.tab.active{background:#28251e;color:var(--accent2);border-color:#6f5f3e}
+.content{margin-top:4px}.section{display:none}.section.active{display:block}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 2px 10px}.section-title h3{margin:0;font-size:1rem}.count{color:var(--muted);font-size:.8rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px}.attr-name{font-size:.8rem;color:var(--muted)}.attr-value{font-size:1.65rem;font-weight:760;margin-top:3px}.attr-raw{font-size:.72rem;color:#808a98;margin-top:2px}
+.attribute-strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin:0 0 10px}.probe-attr{display:flex;align-items:baseline;justify-content:center;gap:6px;min-width:0;padding:8px 7px;background:#15191f;border:1px solid var(--line);border-radius:9px}.probe-attr .abbr{font-size:.7rem;color:var(--muted);font-weight:750;letter-spacing:.045em}.probe-attr .val{font-size:1.02rem;color:#f0d58d;font-weight:800;font-variant-numeric:tabular-nums}@media(max-width:620px){.attribute-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.probe-attr{padding:7px 5px}}
+.search{width:100%;max-width:360px;background:#111419;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 11px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px;background:var(--panel)}table{border-collapse:collapse;width:100%;min-width:580px}th,td{padding:10px 12px;border-bottom:1px solid #292e36;text-align:left;font-size:.86rem}th{position:sticky;top:0;background:#1d2127;color:#bfc7d2;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#1b1f25}.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}.se{color:var(--ok);font-size:.74rem}.house{color:var(--accent2);font-size:.72rem}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{background:#171a1f;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:.8rem}.empty{color:var(--muted);padding:24px;text-align:center}.errorbox{color:#ffd0d0;background:#2a1515;border:1px solid #613838;border-radius:10px;padding:14px}.tagrow{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.tag{display:inline-block;border:1px solid #46505d;border-radius:999px;padding:2px 6px;font-size:.68rem;color:#cbd3de;background:#15191f}.tag.mh{border-color:#7d6334;color:#f0c979;background:#272116;font-weight:800}.tag.spec{border-color:#365b4a;color:#9fe0bc;background:#142019}.tag.meta{border-color:#4a5f85;color:#b9d1ff;background:#151d2a;font-weight:800}.basis-note{font-size:.7rem;color:#77818e;margin-top:3px}.combat-set-tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px}.setbtn{border:1px solid var(--line);background:#15181d;color:var(--muted);border-radius:9px;padding:8px 11px;cursor:pointer;white-space:nowrap}.setbtn.active{background:#28251e;color:var(--accent2);border-color:#6f5f3e}.combat-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}.combat-card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px}.combat-card h4{margin:0 0 8px;font-size:.82rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.05em}.combat-item{padding:8px 0;border-bottom:1px solid #292e36}.combat-item:last-child{border-bottom:0}.combat-name{font-weight:730}.combat-meta{font-size:.76rem;color:var(--muted);margin-top:3px}.combat-empty{color:#7e8793;font-size:.8rem}.overview-group{margin-bottom:4px}
+.group-row td{background:#252a32;color:var(--accent2);font-weight:800;text-transform:uppercase;letter-spacing:.055em;font-size:.74rem;border-top:1px solid #3b424e}.group-row td span{color:#8e99a8;font-weight:600;margin-left:7px}.cell-sub{font-size:.7rem;color:#7f8996;margin-top:2px}.hot{color:#f4d78e}.combat-summary{display:grid;grid-template-columns:repeat(6,minmax(90px,1fr));gap:8px;margin:0 0 12px}.combat-metric{background:#171a1f;border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}.combat-metric span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.combat-metric strong{font-size:1.15rem}.combat-metric{flex-wrap:wrap}.combat-metric small{flex-basis:100%;font-size:.62rem;color:#7f8997;line-height:1.25;text-transform:none;letter-spacing:0}.combat-sheet{display:flex;flex-direction:column;gap:12px}.combat-block{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px}.combat-block h4{margin:0 0 9px;color:var(--accent2);font-size:.8rem;text-transform:uppercase;letter-spacing:.055em}.combat-table table{min-width:920px}.compact table{min-width:0}.combat-duo{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.combat-stack{display:flex;flex-direction:column;gap:12px}.formula{display:flex;align-items:center;gap:13px;padding:7px 2px}.formula strong{font-size:1.8rem;color:#f4d78e}.formula span{font-size:.78rem;color:var(--muted)}.woundline{display:flex;gap:8px;align-items:center;margin:0 0 8px;color:var(--muted);font-size:.82rem}.woundline strong{color:#f4d78e;font-size:1.1rem}.armor-pieces{margin-top:9px}.combat-notes .note-row{display:grid;grid-template-columns:145px 1fr;gap:8px;align-items:start;padding:6px 0;border-bottom:1px solid #292e36}.combat-notes .note-row:last-child{border-bottom:0}.combat-notes .note-row>strong{font-size:.77rem;color:#c8d0dc}.chip.small{padding:4px 7px;font-size:.72rem}footer{margin-top:28px;color:#6f7987;font-size:.76rem;text-align:center}
+@media(max-width:650px){.app{padding:14px 11px 45px}.herohead{grid-template-columns:1fr}.apbox{grid-template-columns:1fr 1fr}.fileinfo{width:100%;margin-left:0}.toolbar{align-items:stretch}.hero-select{width:100%;min-width:0}.sigil{width:40px;height:40px}.herohead h2{font-size:1.4rem}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}table{min-width:690px}.combat-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.combat-duo{grid-template-columns:1fr}.compact table{min-width:520px}.combat-notes .note-row{grid-template-columns:1fr}.combat-table{overflow-x:auto}}
+
+/* v7 companion data */
+.companion-banner{margin:10px 0 0;padding:9px 12px;border:1px solid #4c4535;background:#211f19;border-radius:9px;color:#cdbb8d;font-size:.76rem}.comp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.comp-card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px}.comp-card h4{margin:0 0 9px;color:var(--accent2);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em}.status-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:9px}.status-card{background:#171a1f;border:1px solid var(--line);border-radius:10px;padding:10px}.status-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.status-head strong{font-size:1.2rem;color:#f4d78e}.status-max{font-size:.68rem;color:var(--muted)}.stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}.mini-btn,.action-btn,.danger-btn{border:1px solid var(--line);background:#1a1e24;color:var(--text);border-radius:8px;padding:7px 9px;cursor:pointer}.mini-btn:hover,.action-btn:hover{border-color:#726344;background:#25231e}.action-btn.primary{background:#302b20;border-color:#76643a;color:#f3d992}.danger-btn{border-color:#633b3b;color:#edaaaa;background:#281919}.form-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:end}.field{display:flex;flex-direction:column;gap:4px;grid-column:span 3}.field.wide{grid-column:span 6}.field.full{grid-column:1/-1}.field label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.045em}.field input,.field select,.field textarea,.comp-input{width:100%;box-sizing:border-box;border:1px solid var(--line);background:#111419;color:var(--text);border-radius:8px;padding:8px 9px;font:inherit}.field textarea{min-height:72px;resize:vertical}.toolbar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:9px 0}.subtle{color:var(--muted);font-size:.76rem}.adv-list,.wish-list,.inv-groups{display:flex;flex-direction:column;gap:10px;margin-top:12px}.adv-card,.wish-card,.inv-group{border:1px solid var(--line);background:#171a1f;border-radius:10px;padding:11px}.adv-head,.wish-head,.inv-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.adv-head h4,.wish-head h4,.inv-head h4{margin:0;color:#e8d29c;font-size:.94rem;text-transform:none;letter-spacing:0}.adv-meta,.wish-meta{color:var(--muted);font-size:.72rem;margin-top:3px}.active-pill{border:1px solid #5f5235;background:#292419;color:#f0d58d;border-radius:999px;padding:3px 7px;font-size:.66rem}.event-list,.learning-list{margin-top:8px;border-top:1px solid #2b3038;padding-top:7px}.event{font-size:.75rem;color:#b8c1cd;padding:3px 0}.learning{display:flex;gap:6px;align-items:flex-start;font-size:.75rem;padding:4px 0}.learn-type{font-weight:800;color:#e4c77f}.wish-values{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:.78rem}.wish-values strong{color:#f0d68d}.match-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.match-chip{font-size:.67rem;border:1px solid #43516a;background:#171f2d;color:#bcd0f0;border-radius:999px;padding:3px 7px}.inv-row{display:grid;grid-template-columns:minmax(160px,1fr) 95px 90px minmax(130px,.7fr) auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #292e36}.inv-row:last-child{border-bottom:0}.inv-name{font-weight:720}.inv-note{font-size:.69rem;color:var(--muted);margin-top:2px}.qty-controls{display:flex;align-items:center;gap:5px;justify-content:flex-end}.qty-controls button{min-width:30px}.alchemy{color:#cbb8f6}.data-box{padding:12px;border:1px dashed #4d5561;border-radius:10px;background:#15181d}.sync-state{display:inline-flex;align-items:center;gap:6px;border:1px solid #655735;background:#282318;color:#e5cb87;border-radius:999px;padding:5px 9px;font-size:.7rem}.sync-dot{width:7px;height:7px;border-radius:50%;background:#d3a64b}.inline-number{width:82px!important}.empty-comp{color:#788390;font-size:.8rem;padding:8px 0}.small-note{font-size:.69rem;color:#7d8794}.section-split{display:grid;grid-template-columns:1fr 1fr;gap:12px}.badge-type{display:inline-block;border:1px solid #46505e;border-radius:999px;padding:2px 6px;font-size:.64rem;color:#aeb9c8;margin-right:4px}
+.item-name-wrap{position:relative}.price-suggestions{position:absolute;z-index:80;top:100%;left:0;right:0;margin-top:4px;max-height:310px;overflow:auto;border:1px solid #4a5360;border-radius:9px;background:#111419;box-shadow:0 16px 35px rgba(0,0,0,.45)}.price-suggestions.hidden{display:none}.price-suggestion{padding:8px 10px;border-bottom:1px solid #292e36;cursor:pointer}.price-suggestion:last-child{border-bottom:0}.price-suggestion:hover,.price-suggestion.active{background:#252a31}.price-suggestion strong{display:block;font-size:.82rem}.price-suggestion span{display:block;margin-top:2px;color:var(--muted);font-size:.68rem}.catalog-hint{margin-top:4px;color:#7f8997;font-size:.66rem}
+.inv-group{position:relative;margin-left:calc(var(--inv-depth,0) * 12px)}.inv-group.drag-over,.inventory-root-drop.drag-over{border-color:var(--accent);background:#242117}.inv-location-title{display:flex;gap:7px;align-items:flex-start}.inv-location-title .subtle{margin-top:2px}.drag-handle{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border:1px solid #3b424d;border-radius:7px;color:#8792a0;background:#14171c;cursor:grab;user-select:none;touch-action:none;font-weight:900;line-height:1}.drag-handle:active{cursor:grabbing}.inv-name-line{display:flex;align-items:flex-start;gap:7px}.inventory-root-drop{border:1px dashed #3d4652;border-radius:9px;padding:8px 10px;margin:10px 0;color:#8f99a7;font-size:.72rem;text-align:center}.drag-ghost{position:fixed;z-index:9999;pointer-events:none;max-width:260px;padding:7px 10px;border:1px solid #806b42;border-radius:8px;background:#1c1a15;color:#f0d58d;box-shadow:0 10px 28px rgba(0,0,0,.45);font-size:.75rem;transform:translate(10px,10px)}
+.event-managed{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.event-main{min-width:0;flex:1}.event-meta{font-size:.63rem;color:#737e8b;margin-top:1px}.event-actions{display:flex;gap:4px;flex-shrink:0}.event-actions .mini-btn,.event-actions .danger-btn{padding:3px 6px;font-size:.66rem}.event-details{margin-top:8px;border-top:1px solid #2b3038;padding-top:7px}.event-details>summary{cursor:pointer;color:#9da7b5;font-size:.7rem;font-weight:700}.adv-energy-summary{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.adv-energy-pill{border:1px solid #414b58;border-radius:999px;padding:2px 6px;color:#b9c2ce;font-size:.64rem}.active-adventure-card{margin-bottom:12px}.active-adventure-title{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.active-adventure-title h4{margin:0;color:#e8d29c;text-transform:none;letter-spacing:0;font-size:.94rem}
+
+@media(max-width:800px){.status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.comp-grid,.section-split{grid-template-columns:1fr}.field,.field.wide{grid-column:span 6}.inv-row{grid-template-columns:1fr 70px 80px;}.inv-row .inv-location{display:none}.inv-row .inv-actions{grid-column:1/-1;justify-self:start}.form-grid{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:520px){.status-grid{grid-template-columns:1fr 1fr}.field,.field.wide{grid-column:1/-1}.stepper{grid-template-columns:repeat(4,1fr)}.inv-row{grid-template-columns:1fr 65px}.inv-row .inv-type{display:none}.inv-row .qty-controls{grid-column:2}.inv-row .inv-actions{grid-column:1/-1}}
+
+/* v8 inventory import + money */
+.import-card{margin-bottom:12px}.import-head{display:flex;gap:14px;justify-content:space-between;align-items:center}.import-head h4{margin:0 0 4px;color:var(--accent2);font-size:.88rem}.source-pill{display:inline-block;border:1px solid #4a5564;border-radius:999px;padding:2px 6px;font-size:.62rem;color:#aeb9c8;margin-left:5px}.consumable-pill{border-color:#5e4f79;color:#cebdf5;background:#1d1926}.money-card{margin-top:12px}.money-summary{display:grid;grid-template-columns:repeat(4,minmax(74px,1fr));gap:8px;margin:8px 0 12px}.money-coin{background:#111419;border:1px solid var(--line);border-radius:9px;padding:9px 10px;text-align:right}.money-coin span{display:block;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.money-coin strong{font-size:1.12rem;color:#f0d58d}.money-list{margin-top:10px;border-top:1px solid #2b3038}.money-row{display:grid;grid-template-columns:115px 1fr auto;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid #292e36}.money-amount{font-variant-numeric:tabular-nums;font-weight:800;color:#b9dfc3}.money-amount.negative{color:#efb0b0}.money-note{font-size:.78rem}.money-meta{font-size:.67rem;color:var(--muted);margin-top:2px}.excel-status{margin-top:7px;min-height:1.2em}.inv-weight{color:#8893a2}.import-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+@media(max-width:650px){.import-head{align-items:flex-start;flex-direction:column}.money-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.money-row{grid-template-columns:1fr auto}.money-row .money-actions{grid-column:1/-1}.money-row .money-amount{text-align:right}}
+
+
+/* v10 structured SF + Zauberspeicher + Proben-Eigenschaften */
+.hidden{display:none!important}.sf-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sf-group{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px}.sf-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}.sf-group-head h4{margin:0;color:var(--accent2);font-size:.8rem;text-transform:uppercase;letter-spacing:.055em}.sf-group-head span{color:var(--muted);font-size:.68rem}.sf-chip{display:inline-flex;gap:6px;align-items:center}.sf-kind{display:inline-block;color:#8ea0b8;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em}.magic-extras{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}.magic-card{min-width:0}.magic-card h4{display:flex;justify-content:space-between;gap:10px;align-items:center}.storage-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}.storage-row{border:1px solid #2f3540;background:#15191f;border-radius:10px;padding:10px}.storage-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.storage-title{font-weight:760}.storage-meta{font-size:.7rem;color:var(--muted);margin-top:3px}.storage-empty{opacity:.58}.magic-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.magic-inline{display:grid;grid-template-columns:100px 120px 1fr;gap:8px;align-items:end;margin-top:8px}.magic-inline label{font-size:.65rem;color:var(--muted);text-transform:uppercase}.magic-inline input{width:100%;border:1px solid var(--line);background:#111419;color:var(--text);border-radius:8px;padding:7px 8px}.hld-note{border-left:3px solid #66583a;padding:7px 9px;background:#1b1a17;color:#bbaa83;font-size:.71rem;border-radius:0 7px 7px 0;margin:8px 0}.slot-badge{display:inline-block;border:1px solid #625639;color:#e7cc86;background:#252117;border-radius:999px;padding:2px 7px;font-size:.65rem;margin-right:6px}.loaded-badge{display:inline-block;border:1px solid #365b4a;color:#9fe0bc;background:#142019;border-radius:999px;padding:2px 7px;font-size:.64rem}.empty-badge{display:inline-block;border:1px solid #5c4545;color:#dca4a4;background:#211717;border-radius:999px;padding:2px 7px;font-size:.64rem}.magic-section-title{margin:16px 2px 8px;color:#cdbb8d;font-size:.74rem;text-transform:uppercase;letter-spacing:.055em}
+@media(max-width:800px){.sf-groups{grid-template-columns:1fr}}@media(max-width:560px){.magic-inline{grid-template-columns:1fr}.magic-actions .action-btn,.magic-actions .danger-btn{padding:6px 8px}}
+
+
+
+/* v18 magical inventory items */
+.artifact-card>h4,.money-card>h4{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+.artifact-card{margin-top:12px}.artifact-form{margin-top:10px}.artifact-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}.artifact-item{border:1px solid #4c4432;background:linear-gradient(180deg,#1a1b20,#15171b);border-radius:11px;padding:11px}.artifact-item-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.artifact-item-title{font-weight:800;color:#f0d58d}.artifact-item-meta{font-size:.69rem;color:var(--muted);margin-top:3px}.artifact-effects{display:flex;flex-direction:column;gap:7px;margin-top:9px}.artifact-effect{border:1px solid #303744;background:#12161b;border-radius:9px;padding:9px}.artifact-effect-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.artifact-effect-name{font-weight:760}.artifact-effect-meta{font-size:.69rem;color:var(--muted);margin-top:3px;line-height:1.4}.artifact-effect-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.magic-pill{border-color:#675486!important;color:#d7c2ff!important;background:#211a2c!important}.charge-badge{display:inline-block;border:1px solid #536746;color:#bde2a7;background:#172116;border-radius:999px;padding:2px 7px;font-size:.64rem;white-space:nowrap}.charge-badge.empty{border-color:#6b4141;color:#eca7a7;background:#271717}.artifact-kind{display:inline-block;border:1px solid #625639;color:#e7cc86;background:#252117;border-radius:999px;padding:2px 7px;font-size:.64rem;margin-left:6px}.artifact-empty-effect{color:var(--muted);font-size:.76rem;padding:7px 0}.dashboard-magic-section-title{margin:9px 0 6px;color:#d9bd79;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:800}.artifact-manage-row{margin-top:8px}
+@media(max-width:650px){.artifact-item-head,.artifact-effect-head{flex-direction:column}.artifact-effect-actions .action-btn,.artifact-effect-actions .danger-btn{padding:6px 8px}}
+
+
+
+/* v19 Geweihte / Liturgien */
+.liturgy-knowledge-card,.liturgy-list-card{margin-bottom:12px}.liturgy-toolbar{margin-bottom:10px}.liturgy-table{min-width:520px}.liturgy-table th:first-child,.liturgy-table td:first-child{width:42px;text-align:center}.liturgy-grade{display:inline-block;border:1px solid #625639;color:#e7cc86;background:#252117;border-radius:999px;padding:2px 7px;font-size:.66rem;white-space:nowrap}.liturgy-grade.base{border-color:#46505d;color:#aeb9c8;background:#15191f}.liturgy-knowledge-list{display:flex;flex-direction:column;gap:8px}.liturgy-knowledge-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #303744;background:#12161b;border-radius:9px;padding:10px}.liturgy-knowledge-title{font-weight:800;color:#f0d58d}.liturgy-knowledge-meta{font-size:.72rem;color:var(--muted);margin-top:3px}.liturgy-knowledge-value{display:flex;align-items:center;gap:8px}.liturgy-knowledge-value strong{font-size:1.18rem;color:#f0d58d}.liturgy-kap{display:inline-block;border:1px solid #5b4f78;color:#d9c8ff;background:#201a2a;border-radius:999px;padding:3px 8px;font-size:.7rem;margin-left:6px}.liturgy-name{font-weight:720}.liturgy-name .roll-mark{margin-left:4px}@media(max-width:600px){.liturgy-knowledge-row{grid-template-columns:1fr}.liturgy-knowledge-value{justify-content:flex-start}.liturgy-table{min-width:430px}}
+
+/* v12 OneDrive / Microsoft Graph beta */
+.cloud-loader{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#13161b}.cloud-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.cloud-head strong{color:var(--accent2)}.cloud-state{display:inline-flex;align-items:center;gap:6px;border:1px solid #515967;border-radius:999px;padding:4px 8px;font-size:.68rem;color:#b8c1cc;background:#181c22}.cloud-state.ok{border-color:#365b4a;color:#a8dfbd;background:#142019}.cloud-state.warn{border-color:#665735;color:#e5cb87;background:#282318}.cloud-state.error{border-color:#633b3b;color:#efb1b1;background:#281919}.cloud-dot{width:7px;height:7px;border-radius:50%;background:currentColor}.cloud-config{margin-top:8px}.cloud-config summary{cursor:pointer;color:#c7b47f;font-size:.78rem}.cloud-config-body{margin-top:10px}.cloud-url{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.67rem;word-break:break-all;color:#9aa6b5}.cloud-browser{margin-top:10px;border:1px solid #343b46;border-radius:10px;background:#111419;overflow:hidden}.cloud-browser-head{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #2d333c}.cloud-browser-head strong{flex:1;font-size:.8rem}.cloud-items{max-height:320px;overflow:auto}.cloud-item{display:flex;align-items:center;gap:9px;width:100%;border:0;border-bottom:1px solid #272c34;background:transparent;color:var(--text);text-align:left;padding:9px 10px;cursor:pointer}.cloud-item:last-child{border-bottom:0}.cloud-item:hover{background:#1b2027}.cloud-item .cloud-icon{width:22px;text-align:center}.cloud-item .cloud-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cloud-item .cloud-meta{font-size:.65rem;color:var(--muted);white-space:nowrap}.cloud-selected{margin-top:8px;padding:9px 10px;border:1px solid #3b4655;border-radius:9px;background:#151a20;font-size:.76rem}.cloud-syncbox{display:flex;flex-direction:column;gap:9px}.cloud-syncrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.cloud-check{display:inline-flex;gap:6px;align-items:center;font-size:.75rem;color:var(--muted)}.cloud-check input{accent-color:#d7aa55}.cloud-message{min-height:1.2em;font-size:.72rem;color:var(--muted)}.cloud-message.ok{color:#9edab5}.cloud-message.warn{color:#e5cb87}.cloud-message.error{color:#efaaaa}.cloud-conflict{padding:9px 10px;border:1px solid #6e5338;background:#281f17;border-radius:9px}.cloud-conflict strong{color:#efc77e}.protocol-warning{margin-top:8px;padding:8px 10px;border:1px solid #694040;background:#2a1818;border-radius:8px;color:#efb0b0;font-size:.73rem}.cloud-hidden{display:none!important}
+@media(max-width:650px){.cloud-head{align-items:flex-start;flex-direction:column}.cloud-item .cloud-meta{display:none}}
+
+
+/* v15 aktive Kampfkombinationen + vorbereiteter Würfeltisch + mobile Tabs */
+.tab{user-select:none;-webkit-user-select:none;touch-action:pan-x}.tab.tab-dragging{opacity:.5;transform:scale(.97);box-shadow:0 0 0 2px #b99754 inset}.tab.tab-drag-over{border-color:#b99754;box-shadow:0 0 0 1px #b99754 inset}.tabs.tabs-sorting{cursor:grabbing}.tab-order-tools{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:-2px 2px 8px}.tab-sort-toggle{border:1px solid #424a56;background:#171b21;color:#b9c3cf;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:.68rem}.tab-sort-toggle.active{border-color:#8b7548;background:#292319;color:#f0d58d}.tab-order-hint{font-size:.66rem;color:#77818e}.tabs.sort-mode{flex-wrap:wrap;overflow-x:visible;border:1px dashed #5c5139;border-radius:11px;padding:8px;background:#151711}.tabs.sort-mode .tab{touch-action:none;cursor:grab}.tabs.sort-mode .tab::before{content:'⋮⋮';color:#8e7a4c;margin-right:5px;font-weight:900}.tabs.sort-mode .tab:disabled{pointer-events:auto;opacity:.55}
+.rollable{cursor:pointer;transition:background .12s,border-color .12s,color .12s}.rollable:hover{background:#28251e!important;color:#f4d78e!important}.rollable:focus-visible{outline:2px solid #d7aa55;outline-offset:2px}.rollable-row{cursor:pointer}.rollable-row:hover td{background:#201f1b}.roll-mark{display:inline-block;margin-left:5px;color:#ae9257;font-size:.68rem;vertical-align:middle}
+.combat-loadout{margin:0 0 12px;background:linear-gradient(135deg,#1a1d21,#171a1f);border:1px solid #4b4434;border-radius:12px;padding:13px}.loadout-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.loadout-head h4{margin:0;color:#f0c979;font-size:.82rem;text-transform:uppercase;letter-spacing:.055em}.loadout-head .small-note{text-align:right}.loadout-options{display:flex;gap:7px;overflow-x:auto;padding:2px 0 7px}.loadout-option{position:relative;display:flex;align-items:center;gap:7px;min-width:max-content;padding:8px 10px;border:1px solid #39414c;border-radius:9px;background:#13171c;color:#b8c1cd;cursor:pointer;font-size:.76rem}.loadout-option input{position:absolute;opacity:0;pointer-events:none}.loadout-option .loadout-check{display:grid;place-items:center;width:17px;height:17px;border:1px solid #596270;border-radius:5px;color:transparent;background:#0f1216;font-size:.72rem;font-weight:900}.loadout-option.active{border-color:#8b7548;color:#f0d58d;background:#252118}.loadout-option.active .loadout-check{background:#d7aa55;border-color:#d7aa55;color:#17130c}.loadout-current{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.loadout-weapon{grid-column:span 2;border:1px solid #303742;border-radius:10px;background:#111419;padding:10px}.loadout-weapon.offhand{border-color:#493d3d}.loadout-weapon h5{margin:0 0 4px;font-size:.86rem;color:#e8edf3}.loadout-hand{color:#8f99a6;font-size:.65rem;text-transform:uppercase;letter-spacing:.055em}.loadout-stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.combat-roll{border:1px solid #514a3a;background:#1c1b17;color:#e9d39b;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:.74rem;font-weight:760}.combat-roll:hover{border-color:#a78b50;background:#2b271d}.combat-roll strong{font-size:.95rem;margin-left:4px}.loadout-ini{grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #303742;border-radius:10px;background:#111419;padding:10px}.loadout-ini .ini-value{font-size:1.28rem;font-weight:800;color:#f0d58d}.loadout-rule-note{grid-column:1/-1;color:#85909e;font-size:.66rem;line-height:1.35}.loadout-kind{display:inline-block;border:1px solid #57503e;border-radius:999px;padding:2px 7px;color:#d9c185;background:#211e17;font-size:.62rem;margin-left:5px}.loadout-empty{color:#84909f;font-size:.78rem;padding:3px}
+
+.dice-bar{position:fixed;z-index:120;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;padding:7px;border:1px solid #535b67;border-radius:14px;background:rgba(17,20,24,.94);box-shadow:0 14px 42px rgba(0,0,0,.52);backdrop-filter:blur(10px)}.dice-bar button{border:1px solid #4b535f;border-radius:9px;background:#20242b;color:#e9edf2;padding:8px 10px;cursor:pointer;font-size:.75rem;font-weight:760;white-space:nowrap}.dice-bar button:hover{border-color:#9c8653;color:#f0d58d;background:#28251e}.dice-bar .zone-btn{color:#d7c28c}
+.dice-overlay{position:fixed;z-index:300;inset:0;display:grid;place-items:center;padding:18px;background:rgba(4,6,8,.72);backdrop-filter:blur(5px)}.dice-overlay.hidden{display:none!important}.dice-dialog{width:min(720px,100%);max-height:min(88vh,780px);overflow:auto;border:1px solid #6c6044;border-radius:16px;background:#16191e;box-shadow:0 30px 90px rgba(0,0,0,.68)}.dice-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 15px 10px}.dice-dialog-head h3{margin:0;color:#f0c979;font-size:1rem}.dice-subtitle{color:#939eac;font-size:.72rem;margin-top:3px}.dice-close{width:34px;height:34px;border:1px solid #3e454f;border-radius:9px;background:#111419;color:#c8d0db;cursor:pointer;font-size:1.1rem}.dice-controls{display:flex;gap:9px;align-items:end;flex-wrap:wrap;padding:0 15px 11px}.dice-control{display:flex;flex-direction:column;gap:4px}.dice-control label{font-size:.64rem;color:#909ba8;text-transform:uppercase;letter-spacing:.05em}.dice-control input{width:135px;border:1px solid #424a56;background:#101318;color:#eef1f5;border-radius:8px;padding:7px 8px}.dice-roll-btn{border:1px solid #8a7445;background:#d7aa55;color:#17130c;border-radius:9px;padding:8px 14px;font-weight:800;cursor:pointer;min-height:34px}.dice-roll-btn:hover{background:#f0c979}.dice-preview{flex-basis:100%;border-left:3px solid #66583a;padding:6px 8px;background:#1b1a17;color:#c3b58f;font-size:.69rem;border-radius:0 7px 7px 0}.felt-wrap{padding:0 12px 12px}.dice-felt{min-height:245px;position:relative;overflow:hidden;border:10px solid #3d2d20;border-radius:18px;background:radial-gradient(circle at 22% 25%,rgba(255,255,255,.035) 0 1px,transparent 2px),radial-gradient(circle at 75% 66%,rgba(0,0,0,.10) 0 1px,transparent 2px),linear-gradient(145deg,#14543c,#0d3e2e 55%,#0a3327);background-size:9px 9px,11px 11px,auto;box-shadow:inset 0 0 38px rgba(0,0,0,.55),inset 0 0 0 2px rgba(255,255,255,.035),0 5px 18px rgba(0,0,0,.34)}.dice-stage{min-height:180px;display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;padding:25px 18px 14px;perspective:700px}.dice-ready{display:flex;flex-direction:column;gap:5px;align-items:center;text-align:center;color:#d7dfda}.dice-ready strong{color:#f0d58d;font-size:.95rem}.dice-ready span{font-size:.72rem;color:#b3c0b8}.die-wrap{display:flex;flex-direction:column;align-items:center;gap:7px}.die{display:grid;place-items:center;font-weight:900;font-variant-numeric:tabular-nums;filter:drop-shadow(0 8px 7px rgba(0,0,0,.38));transform-style:preserve-3d}.die.d20{width:76px;height:76px;clip-path:polygon(50% 0%,88% 18%,100% 58%,76% 94%,50% 100%,24% 94%,0 58%,12% 18%);font-size:1.35rem;border-radius:14px}.die.d20.black{background:linear-gradient(145deg,#333943 0%,#111419 52%,#242933 100%);color:#f4f5f6;text-shadow:0 1px 2px #000}.die.d20.red{background:linear-gradient(145deg,#ca5960,#781f29 55%,#a9343d);color:#fff2f1;text-shadow:0 1px 2px #4a0b10}.die.d20.yellow{background:linear-gradient(145deg,#f0cc58,#b78717 55%,#d6a82e);color:#2d250f;text-shadow:0 1px 0 rgba(255,255,255,.32)}.die.d20.zone{width:86px;height:86px;background:linear-gradient(145deg,#f4f1e8 0%,#cfc9bb 55%,#ebe7dc 100%);color:#22211e;text-shadow:none;box-shadow:inset -5px -6px 10px rgba(56,48,34,.19),inset 4px 4px 8px rgba(255,255,255,.6);border:1px solid rgba(62,57,48,.25)}.zone-glyph{width:45px;height:45px;display:block;overflow:visible}.zone-glyph .body{fill:none;stroke:#8e8a81;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}.zone-glyph .hit{fill:none;stroke:#171717;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}.zone-glyph .hit-fill{fill:#171717;stroke:none}.zone-glyph text{font-size:13px;font-weight:900;fill:#171717;font-family:system-ui,sans-serif}.die.d6{width:68px;height:68px;border-radius:15px;border:2px solid #c5b48d;background:linear-gradient(145deg,#f3e8c8,#d3c19a 58%,#eadbb7);color:#32291c;font-size:1.35rem;box-shadow:inset -5px -5px 12px rgba(75,55,25,.18),inset 4px 4px 10px rgba(255,255,255,.45)}.die.die-rolling{animation:diceTumble .82s cubic-bezier(.18,.78,.23,1) both}.die-label{font-size:.67rem;color:#d9e4dd;text-shadow:0 1px 2px #06140e;text-align:center;max-width:110px}.dice-result{margin:0 18px 16px;border:1px solid #313843;border-radius:11px;background:#111419;padding:11px 12px;text-align:center}.dice-result strong{display:block;font-size:1.12rem;color:#f0d58d}.dice-result .result-detail{margin-top:4px;color:#aeb7c5;font-size:.76rem;line-height:1.45}.dice-result.success strong{color:#91ddb0}.dice-result.fail strong{color:#efaaaa}.dice-result.pending{opacity:.55}.zone-result{display:inline-block;margin-top:5px;border:1px solid #4f5d51;border-radius:999px;padding:3px 8px;color:#cee3d4;background:#15231c}.dice-source-note{font-size:.65rem;color:#788492;margin-top:5px}
+@keyframes diceTumble{0%{transform:translate3d(var(--dice-x,-25px),-155px,120px) rotateX(620deg) rotateY(-510deg) rotateZ(280deg) scale(.7)}58%{transform:translate3d(calc(var(--dice-x,-25px)*-.18),12px,0) rotateX(120deg) rotateY(75deg) rotateZ(-35deg) scale(1.06)}78%{transform:translate3d(5px,-6px,0) rotateX(-18deg) rotateY(12deg) rotateZ(8deg) scale(.98)}100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale(1)}}
+.ui-setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px}.ui-setting-row h4{margin:0 0 3px!important}.toggle-switch{display:inline-flex;align-items:center;gap:7px;color:#b8c2cf;font-size:.75rem;white-space:nowrap}.toggle-switch input{accent-color:#d7aa55;width:18px;height:18px}.data-ui-card{margin-top:12px}
+@media(max-width:700px){.loadout-current{grid-template-columns:1fr 1fr}.loadout-weapon,.loadout-ini{grid-column:1/-1}.dice-bar{width:calc(100% - 18px);justify-content:space-between;gap:3px;padding:6px}.dice-bar button{padding:8px 7px;font-size:.68rem;flex:1}.dice-stage{gap:9px;padding-left:8px;padding-right:8px}.die.d20{width:64px;height:64px}.die.d20.zone{width:76px;height:76px}.die.d6{width:58px;height:58px}.zone-glyph{width:43px;height:43px}.dice-felt{min-height:225px}.dice-dialog{max-height:92vh}.loadout-head{flex-direction:column}.loadout-head .small-note{text-align:left}.tab-order-tools{justify-content:flex-start}.tab-order-hint{display:none}.tabs.sort-mode{gap:6px}.tabs.sort-mode .tab{padding:8px 9px}}
+@media(prefers-reduced-motion:reduce){.die.die-rolling{animation:none!important}}
+
+
+/* v16 Regel- und UI-Fixes */
+.group-row td{padding:0}.group-toggle{display:flex;align-items:center;gap:7px;width:100%;min-height:42px;padding:9px 12px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit;text-transform:inherit;letter-spacing:inherit}.group-toggle:hover{background:#2b3038}.group-toggle:focus-visible,.inv-collapse-toggle:focus-visible,.money-history-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}.group-toggle .collapse-chevron,.group-toggle .group-label,.group-toggle .group-count{margin-left:0}.collapse-chevron{display:inline-block;width:1em;color:#b9a26b;font-weight:900}.group-toggle .group-label{color:var(--accent2)}.group-toggle .group-count{color:#8e99a8;font-weight:600;margin-left:2px}.inv-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.inv-collapse-toggle{display:flex;align-items:flex-start;gap:7px;min-width:0;border:0;background:transparent;color:inherit;text-align:left;padding:0;cursor:pointer}.inv-location-copy{display:flex;flex-direction:column;min-width:0}.inv-location-copy strong{color:#e8d29c;font-size:.94rem}.inv-location-copy small{margin-top:2px;color:var(--muted);font-size:.68rem}.inv-group.collapsed{padding-bottom:9px}.money-history{margin-top:10px;border-top:1px solid #2b3038;padding-top:8px}.money-history-toggle{display:flex;align-items:center;gap:7px;width:100%;min-height:40px;border:0;background:transparent;color:#e8d29c;text-align:left;padding:5px 2px;cursor:pointer;font-weight:760}.money-history-toggle .count{margin-left:auto}.location-delete-dialog{max-width:min(520px,calc(100% - 28px));border:1px solid #4a515d;border-radius:12px;background:#171a1f;color:var(--text);padding:0;box-shadow:0 24px 70px rgba(0,0,0,.6)}.location-delete-dialog::backdrop{background:rgba(0,0,0,.68)}.location-delete-card{padding:18px}.location-delete-card h3{margin:0 0 8px;color:#f0c979}.location-delete-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+@media(max-width:650px){.inv-head{align-items:flex-start}.inv-head-actions{gap:5px}.delete-location{padding:6px 7px;font-size:.7rem}.group-toggle{min-height:44px}.location-delete-actions>*{flex:1 1 100%}}
+
+
+/* v16.1 klappbare Inhaltskästen */
+.box-collapse-heading{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;outline:none}
+.box-collapse-heading:hover{color:#f6dc98}
+.box-collapse-heading:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.box-collapse-chevron{display:inline-flex;align-items:center;justify-content:center;width:1em;flex:0 0 1em;color:#b9a26b;font-weight:900}
+.box-collapse-heading .count{margin-left:auto}
+.box-collapsed>.box-collapse-root.box-collapse-heading{margin-bottom:0!important}
+.box-collapsed>.box-collapse-root.sf-group-head{margin-bottom:0!important}
+.box-collapsed>:not(.box-collapse-root){display:none!important}
+.box-collapsed{padding-bottom:10px}
+.box-collapsed.sf-group{padding-bottom:10px}
+.combat-block.box-collapsed,.combat-card.box-collapsed,.comp-card.box-collapsed,.sf-group.box-collapsed{min-height:42px}
+@media(max-width:650px){.box-collapse-heading{min-height:30px}.combat-block.box-collapsed,.combat-card.box-collapsed,.comp-card.box-collapsed,.sf-group.box-collapsed{min-height:44px}}
+
+
+/* v17 Spieltisch */
+.dashboard-title{margin-bottom:10px}.dashboard-attr-card{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:9px 11px;margin-bottom:12px}.dashboard-card-label{font-size:.68rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.055em;font-weight:800;margin-bottom:7px}.dashboard-attributes{display:grid;grid-template-columns:repeat(10,minmax(55px,1fr));gap:6px}.dashboard-attr{border:1px solid #343b46;border-radius:8px;background:#15191f;min-height:45px;padding:6px 7px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:1px}.dashboard-attr.rollable{cursor:pointer}.dashboard-attr.rollable:hover{border-color:#76643a;background:#211e17}.dashboard-attr span{font-size:.62rem;text-transform:uppercase;color:#9ea8b5;letter-spacing:.04em}.dashboard-attr strong{font-size:1.05rem;color:#f2d586}.dashboard-layout{display:grid;grid-template-columns:minmax(390px,1.32fr) minmax(290px,.68fr);gap:12px;align-items:start}.dashboard-side{display:flex;flex-direction:column;gap:12px}.dashboard-body-shell{min-width:0}.dashboard-body-map{position:relative;width:min(100%,620px);aspect-ratio:2/3;margin:0 auto;overflow:hidden;border-radius:11px;box-shadow:0 12px 34px rgba(0,0,0,.26);container-type:inline-size}.dashboard-body-map>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;pointer-events:none}.dashboard-energy-overlay{position:absolute;left:7.7%;top:3.15%;width:84.7%;height:7.15%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;color:#f5e7c2}.dashboard-energy-slot{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.2cqw .8cqw;text-shadow:0 1px 2px #000}.dashboard-energy-slot.special-stack{gap:.2cqw}.dashboard-energy{width:100%;text-align:center;min-width:0}.dashboard-energy-main{display:flex;align-items:baseline;justify-content:center;gap:.6cqw;line-height:1}.dashboard-energy-name{font-size:2.35cqw;color:#e7c577;font-weight:800}.dashboard-energy-value{font-size:2.9cqw;font-weight:850;color:#fff5d8}.dashboard-energy-buttons{display:flex;justify-content:center;gap:.45cqw;margin-top:.55cqw}.dashboard-energy-buttons button{min-width:3.25cqw;height:2.35cqw;padding:0 .4cqw;border:1px solid rgba(220,187,112,.55);border-radius:.55cqw;background:rgba(12,15,19,.82);color:#f0dfb5;font-size:1.42cqw;font-weight:800;cursor:pointer;line-height:1}.dashboard-energy-buttons button:hover:not(:disabled){background:#342a19;border-color:#d2ac56}.dashboard-energy-buttons button:disabled{opacity:.3;cursor:default}.dashboard-energy-thresholds{font-size:1.03cqw;color:#b9c1cb;margin-top:.3cqw;white-space:nowrap}.dashboard-energy.critical-half .dashboard-energy-value{color:#ffd477}.dashboard-energy.critical-third .dashboard-energy-value{color:#ffad78}.dashboard-energy.critical-quarter .dashboard-energy-value{color:#ff7f7f}.dashboard-energy-slot.special-stack .dashboard-energy-main{line-height:.9}.dashboard-energy-slot.special-stack .dashboard-energy-name{font-size:1.7cqw}.dashboard-energy-slot.special-stack .dashboard-energy-value{font-size:2.05cqw}.dashboard-energy-slot.special-stack .dashboard-energy-buttons{margin-top:.25cqw}.dashboard-energy-slot.special-stack .dashboard-energy-buttons button{height:1.8cqw;font-size:1.05cqw;min-width:2.8cqw}.dashboard-zone{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff4d8;text-shadow:0 1px 3px #000;padding:.5cqw;box-sizing:border-box}.dashboard-zone-name{font-size:2.05cqw;line-height:1.05;font-weight:900;color:#e8c77c;text-transform:uppercase;letter-spacing:.03em}.dashboard-zone-rs{font-size:1.75cqw;line-height:1.1;margin-top:.5cqw}.dashboard-wounds{display:flex;gap:.7cqw;justify-content:center;margin-top:.7cqw}.dashboard-wound-dot{width:2.65cqw;height:2.65cqw;min-width:13px;min-height:13px;max-width:22px;max-height:22px;border-radius:50%;border:1.4px solid #ead49d;background:rgba(7,9,12,.68);box-shadow:0 1px 3px #000;cursor:pointer;padding:0}.dashboard-wound-dot.active{background:#b73b38;border-color:#ffd0b0;box-shadow:0 0 0 1px rgba(110,20,20,.8),0 0 7px rgba(213,65,53,.55)}.dashboard-wound-dot:disabled{cursor:default;opacity:.55}.dashboard-zone[data-zone="ruecken"]{left:5.2%;top:16.65%;width:25.7%;height:9.75%}.dashboard-zone[data-zone="kopf"]{left:69.4%;top:15.55%;width:24.0%;height:9.7%}.dashboard-zone[data-zone="linkerarm"]{left:5.35%;top:31.0%;width:20.2%;height:9.35%}.dashboard-zone[data-zone="brust"]{left:73.2%;top:30.55%;width:21.3%;height:9.45%}.dashboard-zone[data-zone="bauch"]{left:4.25%;top:43.25%;width:20.3%;height:9.35%}.dashboard-zone[data-zone="rechterarm"]{left:75.65%;top:42.9%;width:20.25%;height:9.35%}.dashboard-zone[data-zone="linkesbein"]{left:4.25%;top:64.95%;width:22.0%;height:9.4%}.dashboard-zone[data-zone="rechtesbein"]{left:72.9%;top:64.95%;width:23.0%;height:9.4%}.dashboard-footer-overlay{position:absolute;left:6.7%;top:89.05%;width:86.3%;height:6.55%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;text-align:center;text-shadow:0 1px 3px #000}.dashboard-foot-label{display:block;color:#d9bd79;font-size:1.65cqw;font-weight:800}.dashboard-foot-value{display:block;color:#fff0c9;font-size:3cqw;font-weight:900;line-height:1.05}.dashboard-foot-sub{display:block;color:#aeb7c4;font-size:.9cqw;line-height:1}.dashboard-wound-hint{min-height:1.25em;margin:6px auto 0;max-width:620px;text-align:center;color:#9ba5b2;font-size:.7rem}.dashboard-combat-select{margin-bottom:9px}.dashboard-combat-weapon{border-top:1px solid #2b3038;padding:8px 0}.dashboard-combat-weapon:first-of-type{border-top:0}.dashboard-combat-hand{font-size:.62rem;color:#8e99a8;text-transform:uppercase;letter-spacing:.04em}.dashboard-combat-name{font-weight:800;margin:2px 0 6px}.dashboard-combat-rolls{display:flex;gap:6px;flex-wrap:wrap}.dashboard-combat-roll{border:1px solid #5f5134;background:#292319;color:#ebcf88;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:.72rem;font-weight:800}.dashboard-combat-roll strong{margin-left:4px;color:#fff0c3}.dashboard-combat-roll:hover{background:#352d1d}.dashboard-ini{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #2b3038;margin-top:6px;padding-top:9px}.dashboard-ini .ini-main{font-size:1.22rem;color:#f3d58a;font-weight:900}.dashboard-dodge{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #2b3038}.dashboard-dodge strong{font-size:1.15rem;color:#f3d58a}.favorite-star{border:0;background:transparent;color:#8e99a8;cursor:pointer;padding:0 5px 0 0;font-size:1.05rem;vertical-align:middle}.favorite-star.active{color:#e6c46f}.favorite-star:hover{color:#f2d78e}.dashboard-fav-list{display:flex;flex-direction:column;gap:5px}.dashboard-fav-row{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;border:1px solid #303743;background:#15191f;border-radius:8px;padding:7px 8px}.dashboard-fav-roll{min-width:0;cursor:pointer}.dashboard-fav-roll:hover .dashboard-fav-name{color:#f3d58a}.dashboard-fav-name{font-size:.8rem;font-weight:750}.dashboard-fav-probe{font-size:.64rem;color:#818c99;margin-top:1px}.dashboard-fav-value{color:#f3d58a;font-weight:850}.dashboard-money-total{font-size:1.3rem;color:#f3d58a;font-weight:850;margin-bottom:8px}.dashboard-magic-list{display:flex;flex-direction:column;gap:6px}.dashboard-magic-row{border:1px solid #303743;background:#15191f;border-radius:8px;padding:7px 8px}.dashboard-magic-row.empty-slot{opacity:.55}.dashboard-magic-title{font-size:.78rem;font-weight:800}.dashboard-magic-meta{font-size:.65rem;color:#8994a2;margin-top:2px}.dashboard-magic-actions{margin-top:5px}.dashboard-magic-actions button{padding:4px 7px;font-size:.66rem}.dashboard-artifact-note{border-top:1px solid #2b3038;margin-top:8px;padding-top:7px;color:#8d98a5;font-size:.68rem}
+@media(max-width:900px){.dashboard-layout{grid-template-columns:minmax(340px,1fr) minmax(250px,.65fr)}.dashboard-attributes{grid-template-columns:repeat(5,minmax(55px,1fr))}}
+@media(max-width:720px){.dashboard-layout{grid-template-columns:1fr}.dashboard-body-shell{order:0}.dashboard-side{order:1}.dashboard-body-map{width:min(100%,560px)}.dashboard-attributes{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:430px){.dashboard-attr-card{padding:7px}.dashboard-attributes{gap:4px}.dashboard-attr{min-height:39px;padding:4px}.dashboard-attr strong{font-size:.95rem}.dashboard-energy-name{font-size:2.65cqw}.dashboard-energy-value{font-size:3.1cqw}.dashboard-energy-buttons button{min-width:3.7cqw;height:2.8cqw;font-size:1.65cqw}.dashboard-zone-name{font-size:2.25cqw}.dashboard-zone-rs{font-size:1.9cqw}.dashboard-foot-label{font-size:1.8cqw}.dashboard-foot-value{font-size:3.25cqw}}
+
+
+/* v17.1 Spieltisch layout polish */
+.dashboard-energy-slot:not(.special-stack){display:grid;grid-template-rows:auto auto auto;align-content:start;justify-items:center;padding:.2cqw .8cqw}
+.dashboard-energy-slot:not(.special-stack) .dashboard-energy{display:grid;grid-template-rows:minmax(2.9cqw,auto) minmax(2.35cqw,auto) minmax(1.15cqw,auto);align-content:start}
+.dashboard-energy-slot:not(.special-stack) .dashboard-energy-main{min-height:2.9cqw}
+.dashboard-energy-slot:not(.special-stack) .dashboard-energy-buttons{min-height:2.35cqw;margin-top:.35cqw}
+.dashboard-energy-slot:not(.special-stack) .dashboard-energy-thresholds{min-height:1.15cqw;margin-top:.18cqw}
+.dashboard-energy-empty{visibility:hidden}
+.dashboard-zone[data-zone="bauch"]{left:4.9%;top:43.9%;width:21%;height:10%}
+.dashboard-zone[data-zone="rechterarm"]{left:75.1%;top:42.9%;width:20.9%;height:10%}
+.dashboard-footer-overlay{align-items:stretch}
+.dashboard-footer-item{display:flex;flex-wrap:wrap;align-content:center;align-items:baseline;justify-content:center;gap:.7cqw;height:100%;padding:.2cqw .45cqw;text-align:center}
+.dashboard-foot-label{display:inline;color:#d9bd79;font-size:2.05cqw;font-weight:900;line-height:1}
+.dashboard-foot-value{display:inline;color:#fff0c9;font-size:3.2cqw;font-weight:900;line-height:1}
+.dashboard-foot-sub{display:block;flex-basis:100%;margin-top:-.15cqw;color:#aeb7c4;font-size:1.0cqw;line-height:1}
+@media(max-width:430px){.dashboard-foot-label{font-size:2.25cqw}.dashboard-foot-value{font-size:3.45cqw}.dashboard-foot-sub{font-size:1.1cqw}}
+
+
+
+/* v17.1.1 Spieltisch alignment */
+.dashboard-energy-overlay{transform:translateY(1.35cqw)}
+.dashboard-zone[data-zone="bauch"]{transform:translateY(2.1cqw)}
+.dashboard-zone[data-zone="rechterarm"]{transform:translateY(1.8cqw)}
+
+
+
+/* v17.1.2 footer/abdomen alignment */
+.dashboard-zone[data-zone="bauch"]{
+  top:47.6% !important;
+}
+.dashboard-footer-overlay{
+  left:7.5% !important;
+  width:88% !important;
+  grid-template-columns:24.32fr 22.16fr 23.07fr 30.45fr !important;
+}
+.dashboard-footer-overlay>div{
+  justify-self:stretch;
+  text-align:center;
+}
+
+
+
+/* v17.2 spell favorites and collapsible spell list */
+.spell-list-card{margin-bottom:12px}
+.spell-list-card>h4{display:flex;align-items:center;gap:8px}
+.spell-list-card>h4 .count{margin-left:auto}
+.spell-list-toolbar{margin-bottom:10px}
+.spell-list-toolbar .search{max-width:100%}
+.dashboard-fav-tags{margin-top:5px}
+.dashboard-fav-value{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;line-height:1.05}
+.dashboard-fav-unit{font-size:.55rem;color:#8994a2;text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-bottom:2px}
+
+/* v17.2.1 compact adventure event log */
+.event-energy-label{color:#f0c979;font-weight:850}
+.event-energy-range{color:#d4dae3}
+.event-list-more{display:flex;justify-content:center;padding:8px 0 2px;border-top:1px solid #272d35;margin-top:4px}
+.event-list-more .mini-btn{min-width:150px}
+
+/* v17.1.3 final optical alignment */
+/* Bauch: minimal nach oben und links; vorhandener v17.1.1-Y-Offset bleibt erhalten. */
+.dashboard-zone[data-zone="bauch"]{
+  left:4.5% !important;
+  top:47.2% !important;
+}
+/* Die gezeichneten Footer-Felder sind optisch nicht exakt gleich breit.
+   gRS und gBE passen bereits; nur WS und GS werden gezielt nach links gerueckt. */
+.dashboard-footer-item:nth-child(3){position:relative;left:-1cqw;}
+.dashboard-footer-item:nth-child(4){position:relative;left:-1.5cqw;}
+
+
+/* v17.3 HLD quality audit */
+.quality-audit-card{margin-top:12px}.quality-audit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.quality-audit-head h4{margin-bottom:5px}.quality-summary{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px;margin:10px 0}.quality-metric{border:1px solid var(--line);border-radius:9px;background:#111419;padding:9px 10px}.quality-metric span{display:block;color:var(--muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.045em}.quality-metric strong{display:block;margin-top:2px;font-size:1.15rem}.quality-metric.error strong{color:#ef9c9c}.quality-metric.warn strong{color:#ebc17a}.quality-metric.ok strong{color:#8dd4a8}.quality-hero-list{display:flex;flex-direction:column;gap:7px;margin-top:9px}.quality-hero{border:1px solid #2f3540;border-radius:9px;background:#14181d}.quality-hero summary{cursor:pointer;padding:9px 10px;color:#e8d29c;font-weight:750}.quality-issues{padding:0 10px 8px}.quality-issue{display:grid;grid-template-columns:58px 150px 1fr;gap:8px;padding:6px 0;border-top:1px solid #292e36;font-size:.76rem;align-items:start}.quality-sev{font-weight:800;text-transform:uppercase;font-size:.64rem;letter-spacing:.04em}.quality-sev.error{color:#ef9c9c}.quality-sev.warn{color:#ebc17a}.quality-sev.info{color:#92b7df}.quality-code{color:#9da8b6;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.68rem}.quality-catalog{margin-top:10px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#111419;color:#aeb7c5;font-size:.74rem;line-height:1.55}.quality-empty{padding:15px 4px;color:#8dd4a8}.quality-copy-state{font-size:.72rem;color:#8dd4a8}.quality-audit-actions button:disabled{opacity:.45;cursor:not-allowed}@media(max-width:700px){.quality-audit-head{flex-direction:column}.quality-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.quality-issue{grid-template-columns:52px 1fr}.quality-code{grid-column:2}.quality-detail{grid-column:1/-1}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><div class="sigil">⚔</div><div><h1>HeldenMobil</h1><div class="sub">DSA 4.1 · HLD + Begleitdaten v20.3.2</div></div></div>
+  <div class="badge">Beta v20.3.2</div>
+</header>
+
+<section class="workspace" id="workspace">
+  <div class="panel hero-only">
+    <div class="toolbar">
+      <div><label for="heroSelect">Held</label><br><select id="heroSelect" class="hero-select"></select></div>
+      <div class="fileinfo" id="fileInfo"></div>
+    </div>
+    <div class="readonly">Nur Lesen: Dieser Prototyp verändert die HLD-Datei nicht.</div>
+  </div>
+
+  <div class="panel herohead hero-only">
+    <div><h2 id="heroName">–</h2><div class="meta" id="heroMeta"></div></div>
+    <div class="apbox">
+      <div class="metric"><div class="label">AP gesamt</div><div class="value" id="apTotal">–</div></div>
+      <div class="metric"><div class="label">freie AP</div><div class="value" id="apFree">–</div></div>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Charakterbereiche">
+    <button class="tab active" data-tab="data">Daten</button>
+    <button class="tab" data-tab="dashboard" disabled>Spieltisch</button>
+    <button class="tab" data-tab="overview" disabled>Übersicht</button>
+    <button class="tab" data-tab="talents" disabled>Talente</button>
+    <button class="tab hidden" data-tab="spells" disabled>Zauber</button>
+    <button class="tab hidden" data-tab="liturgies" disabled>Liturgien</button>
+    <button class="tab" data-tab="combat" disabled>Kampf</button>
+    <button class="tab" data-tab="sf" disabled>Sonderfertigkeiten</button>
+    <button class="tab" data-tab="vt" disabled>Vor-/Nachteile</button>
+    <button class="tab" data-tab="adventures" disabled>Abenteuer</button>
+    <button class="tab" data-tab="advancement" disabled>Steigerung</button>
+    <button class="tab" data-tab="inventory" disabled>Inventar</button>
+  </nav>
+  <div class="tab-order-tools"><button type="button" id="tabSortToggle" class="tab-sort-toggle">⇆ Tabs sortieren</button><span class="tab-order-hint">Desktop: ziehen · Handy: Sortiermodus einschalten und ziehen</span></div>
+
+  <main class="content">
+    <section id="dashboard" class="section">
+      <div class="section-title dashboard-title"><h3>Spieltisch</h3><span class="count" id="dashboardAdventureState"></span></div>
+      <div class="dashboard-attr-card">
+        <div class="dashboard-card-label">Eigenschaften · MR · SO</div>
+        <div id="dashboardAttributes" class="dashboard-attributes"></div>
+      </div>
+      <div class="dashboard-layout">
+        <div class="dashboard-body-shell">
+          <div id="dashboardBodyMap" class="dashboard-body-map">
+            <img id="dashboardBodyImage" alt="Trefferzonen und Rüstung" draggable="false">
+            <div id="dashboardEnergyOverlay" class="dashboard-energy-overlay"></div>
+            <div id="dashboardZoneOverlay"></div>
+            <div id="dashboardFooterOverlay" class="dashboard-footer-overlay"></div>
+          </div>
+          <div id="dashboardWoundHint" class="dashboard-wound-hint"></div>
+        </div>
+        <div class="dashboard-side">
+          <div class="comp-card dashboard-combat-card"><h4>Aktuelle Kampfkombination</h4><div id="dashboardCombat"></div></div>
+          <div class="comp-card"><h4>Lieblingstalente</h4><div id="dashboardFavorites"></div></div>
+          <div class="comp-card hidden" id="dashboardSpellFavoritesCard"><h4>Lieblingszauber</h4><div id="dashboardSpellFavorites"></div></div>
+          <div class="comp-card hidden" id="dashboardLiturgyFavoritesCard"><h4>Lieblingsliturgien</h4><div id="dashboardLiturgyFavorites"></div></div>
+          <div class="comp-card"><h4>Geld</h4><div id="dashboardMoney"></div></div>
+          <div class="comp-card"><h4>Magische Speicher</h4><div id="dashboardMagic"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="overview" class="section">
+      <div class="overview-group">
+        <div class="section-title"><h3>Eigenschaften</h3><span class="count" id="attrCount"></span></div>
+        <div id="attributes" class="grid"></div>
+      </div>
+      <div class="overview-group">
+        <div class="section-title"><h3>Basiswerte</h3><span class="count" id="basisCount"></span></div>
+        <div id="basisValues" class="grid"></div>
+      </div>
+    </section>
+
+    <section id="talents" class="section">
+      <div class="section-title"><h3>Talente</h3><input class="search" id="talentSearch" placeholder="Talente filtern …"></div>
+      <div id="talentAttrStrip" class="attribute-strip" aria-label="Eigenschaften für Talentproben"></div>
+      <div class="tablewrap"><table><thead><tr><th>Talent</th><th>Probe</th><th class="num">TaW</th><th>Bemerkungen</th></tr></thead><tbody id="talentBody"></tbody></table></div>
+    </section>
+
+    <section id="spells" class="section">
+      <div class="section-title"><h3>Zauber</h3></div>
+      <div class="comp-card spell-list-card">
+        <h4><span>Zaubersprüche</span><span class="count" id="spellCount"></span></h4>
+        <div class="spell-list-toolbar"><input class="search" id="spellSearch" placeholder="Zauber filtern …"></div>
+        <div id="spellAttrStrip" class="attribute-strip" aria-label="Eigenschaften für Zauberproben"></div>
+        <div class="tablewrap"><table><thead><tr><th>Zauber</th><th>Probe</th><th>Rep.</th><th>Spalte</th><th class="num">ZfW</th><th>Bemerkungen</th></tr></thead><tbody id="spellBody"></tbody></table></div>
+      </div>
+      <div id="magicExtras" class="magic-extras">
+        <div id="staffStorageCard" class="comp-card magic-card hidden">
+          <h4><span>Zauberspeicher im Stab</span><span class="count" id="staffSlotCount"></span></h4>
+          <div id="staffStorageHint" class="hld-note"></div>
+          <div class="form-grid">
+            <div class="field"><label>Slot</label><input id="staffSlotNo" type="number" min="1" placeholder="auto"></div>
+            <div class="field wide"><label>Zauber</label><select id="staffSpell"></select></div>
+            <div class="field"><label>ZfP*</label><input id="staffZfp" type="number" min="0" placeholder="optional"></div>
+            <div class="field"><label>AsP</label><input id="staffAsp" type="number" min="0" placeholder="optional"></div>
+            <div class="field full"><label>Notiz</label><input id="staffNote" placeholder="Variante, Modifikation, Auslöser …"></div>
+          </div>
+          <div class="toolbar-row"><button class="action-btn primary" id="addStaffSlot">In Speicher legen</button></div>
+          <div id="staffStorageList" class="storage-list"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="liturgies" class="section">
+      <div class="section-title"><h3>Liturgien</h3><span class="count" id="liturgyCount"></span></div>
+      <div class="comp-card liturgy-knowledge-card">
+        <h4>Liturgiekenntnis</h4>
+        <div id="liturgyKnowledge"></div>
+      </div>
+      <div class="comp-card liturgy-list-card">
+        <h4><span>Segnungen</span><span class="count" id="blessingCount"></span></h4>
+        <div class="liturgy-toolbar"><input class="search" id="liturgySearch" placeholder="Liturgien und Segnungen filtern …"></div>
+        <div class="tablewrap"><table class="liturgy-table"><thead><tr><th></th><th>Segnung</th><th>Grad</th></tr></thead><tbody id="blessingBody"></tbody></table></div>
+      </div>
+      <div class="comp-card liturgy-list-card">
+        <h4><span>Liturgien</span><span class="count" id="liturgyProperCount"></span></h4>
+        <div class="tablewrap"><table class="liturgy-table"><thead><tr><th></th><th>Liturgie</th><th>Grad</th></tr></thead><tbody id="liturgyBody"></tbody></table></div>
+      </div>
+      <div class="hld-note">Grade werden ausschließlich aus der HLD übernommen. Eine unnummerierte Fassung wird als Grundgrad angezeigt; zusätzliche gelernte Grade stehen in der Heldensoftware als römische Zahl im Namen.</div>
+    </section>
+
+    <section id="combat" class="section">
+      <div class="section-title"><h3>Kampfset</h3><span class="count" id="combatSetCount"></span></div>
+      <div id="combatSetTabs" class="combat-set-tabs"></div>
+      <div id="combatLoadoutPanel" class="combat-loadout"></div>
+      <div id="combatSummary" class="combat-summary"></div>
+      <div id="combatSheet" class="combat-sheet">
+        <div class="combat-block"><h4>Nahkampfwaffen</h4><div class="tablewrap combat-table"><table><thead><tr><th>Waffe</th><th>Typ/eBE</th><th>DK</th><th>TP</th><th>TP/KK</th><th class="num">INI</th><th>WM</th><th class="num">AT</th><th class="num">PA</th><th>TP aktuell</th><th class="num">BF</th></tr></thead><tbody id="meleeBody"></tbody></table></div></div>
+        <div class="combat-block"><h4>Fernkampfwaffen</h4><div class="tablewrap combat-table"><table><thead><tr><th>Waffe</th><th>Typ/eBE</th><th>TP</th><th>Entfernung</th><th>TP/Entf.</th><th class="num">FK</th><th>Geschosse</th></tr></thead><tbody id="rangedBody"></tbody></table></div></div>
+        <div class="combat-duo">
+          <div class="combat-block"><h4>Waffenloser Kampf</h4><div class="tablewrap compact"><table><thead><tr><th>Talent</th><th>TP/KK</th><th>INI</th><th class="num">AT</th><th class="num">PA</th><th>TP(A)</th></tr></thead><tbody id="unarmedBody"></tbody></table></div></div>
+          <div class="combat-stack"><div class="combat-block"><h4>Schilde &amp; Parierwaffen</h4><div class="tablewrap compact"><table><thead><tr><th>Nebenhand</th><th class="num">INI</th><th>WM</th><th class="num">PA</th><th class="num">BF</th></tr></thead><tbody id="shieldBody"></tbody></table></div></div><div class="combat-block"><h4>Ausweichen</h4><div id="dodgeBox"></div></div></div>
+        </div>
+        <div class="combat-duo">
+          <div class="combat-block"><h4>Wunden & Energien</h4><div class="woundline">Wundschwelle <strong id="woundThreshold">–</strong></div><div class="tablewrap compact"><table><thead><tr><th>Energie</th><th class="num">Max</th><th class="num">1/2</th><th class="num">1/3</th><th class="num">1/4</th></tr></thead><tbody id="energyBody"></tbody></table></div></div>
+          <div class="combat-block"><h4>Rüstung nach Trefferzonen</h4><div class="tablewrap compact"><table><thead><tr><th>Ko</th><th>Br</th><th>Rü</th><th>Ba</th><th>LA</th><th>RA</th><th>LB</th><th>RB</th><th>gRS</th><th>gBE</th></tr></thead><tbody id="zoneBody"></tbody></table></div><div class="tablewrap compact armor-pieces"><table><thead><tr><th>Rüstungsstück</th><th class="num">RS</th><th class="num">BE</th></tr></thead><tbody id="armorBody"></tbody></table></div></div>
+        </div>
+        <div class="combat-block combat-notes"><h4>Kampffertigkeiten</h4><div class="note-row"><strong>Nahkampf:</strong><div id="combatSf" class="chips"></div></div><div class="note-row"><strong>Talentspezialisierung:</strong><div id="combatSpecs" class="chips"></div></div><div class="note-row"><strong>Manöver:</strong><div id="combatManeuvers" class="chips"></div></div></div>
+      </div>
+    </section>
+
+    <section id="sf" class="section"><div class="section-title"><h3>Sonderfertigkeiten</h3><input class="search" id="sfSearch" placeholder="Sonderfertigkeiten filtern …"></div><div class="count" id="sfCount" style="margin:0 2px 9px"></div><div class="sf-groups" id="sfGroups"></div></section>
+    <section id="vt" class="section">
+      <div class="overview-group"><div class="section-title"><h3>Vorteile</h3><span class="count" id="advCount"></span></div><div class="chips" id="advList"></div></div>
+      <div class="overview-group" style="margin-top:18px"><div class="section-title"><h3>Nachteile</h3><span class="count" id="disadvCount"></span></div><div class="chips" id="disadvList"></div></div>
+    </section>
+
+    <section id="adventures" class="section">
+      <div class="section-title"><h3>Abenteuer &amp; Spielstand</h3><span class="count" id="adventureCount"></span></div>
+      <div class="companion-banner">LeP, AuP, AsP, Wunden und Zustände werden jetzt <strong>pro Abenteuer</strong> gespeichert. Ein neues Abenteuer beginnt mit den Maximalwerten aus der HLD.</div>
+      <div class="comp-card active-adventure-card">
+        <div class="active-adventure-title"><h4>Aktives Abenteuer</h4><span id="activeAdventureState" class="small-note"></span></div>
+        <div class="form-grid"><div class="field wide"><label>Abenteuer</label><select id="statusAdventureSelect"></select></div></div>
+        <div id="statusGrid" class="status-grid" style="margin-top:12px"></div>
+        <div class="comp-grid" style="margin-top:12px">
+          <div class="comp-card"><h4>Zustand</h4><div class="form-grid"><div class="field"><label>Wunden</label><input id="woundsInput" type="number" min="0"></div><div class="field full"><label>Notizen / temporäre Zustände</label><textarea id="statusNotes"></textarea></div></div></div>
+          <div class="comp-card"><h4>Schnellereignis</h4><div class="field full"><label>Notiz ins aktive Abenteuer</label><input id="quickEventText" placeholder="z. B. Giftwirkung, Wunde, Fund …"></div><div class="toolbar-row"><button class="action-btn" id="addQuickEvent">Ereignis eintragen</button><span class="subtle">LeP/AsP/AuP-Änderungen werden automatisch protokolliert.</span></div></div>
+        </div>
+      </div>
+      <div class="comp-card">
+        <h4>Abenteuer anlegen</h4>
+        <div class="form-grid"><div class="field wide"><label>Titel</label><input id="advTitle" placeholder="Abenteuer / Ort"></div><div class="field"><label>Datum</label><input id="advDate" type="date"></div><div class="field"><label>AP erhalten</label><input id="advAp" type="number" value="0"></div><div class="field full"><label>Notiz</label><textarea id="advNotes"></textarea></div></div>
+        <div class="toolbar-row"><button class="action-btn primary" id="addAdventure">Abenteuer anlegen &amp; aktivieren</button><span class="subtle">LeP, AuP und AsP starten dabei auf Maximum.</span></div>
+      </div>
+      <div id="adventureList" class="adv-list"></div>
+    </section>
+
+    <section id="advancement" class="section">
+      <div class="section-title"><h3>Steigerungswünsche</h3><span class="count" id="wishCount"></span></div>
+      <div class="comp-card">
+        <h4>Wunsch hinzufügen</h4>
+        <div class="form-grid"><div class="field"><label>Art</label><select id="wishType"><option>Talent</option><option>Zauber</option><option>Eigenschaft</option><option>Sonderfertigkeit</option><option>Basiswert</option><option>Sonstiges</option></select></div><div class="field wide"><label>Ziel</label><input id="wishTarget" list="wishTargets" placeholder="z. B. Alchimie"><datalist id="wishTargets"></datalist></div><div class="field"><label>Zielwert</label><input id="wishGoal" placeholder="z. B. 20"></div><div class="field"><label>Priorität</label><select id="wishPriority"><option>Normal</option><option>Hoch</option><option>Niedrig</option></select></div><div class="field full"><label>Notiz</label><input id="wishNote" placeholder="Lehrmeister, Reihenfolge, Voraussetzungen …"></div></div>
+        <div class="toolbar-row"><button class="action-btn primary" id="addWish">Steigerungswunsch hinzufügen</button></div>
+      </div>
+      <div id="wishList" class="wish-list"></div>
+    </section>
+
+    <section id="inventory" class="section">
+      <div class="section-title"><h3>Inventar</h3><span class="count" id="inventoryCount"></span></div>
+      <div class="comp-card import-card">
+        <div class="import-head"><div><h4>Excel übernehmen</h4><div class="subtle">Liest die Blätter <strong>Inventar</strong>, optional <strong>Ausrüstung</strong> für Verbrauchsmaterial, <strong>Abenteuer</strong> für Geld und <strong>Aventurische Preisliste</strong> für die Gegenstandsvorschläge. Erneuter Import aktualisiert dieselben Excel-Zeilen statt sie zu verdoppeln.</div></div><div class="import-actions"><label class="action-btn primary" for="inventoryExcelInput">Excel importieren</label><input id="inventoryExcelInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div></div>
+        <div id="excelImportStatus" class="excel-status small-note"></div>
+      </div>
+      <div class="section-split">
+        <div class="comp-card"><h4>Ort / Behälter</h4><div class="form-grid"><div class="field wide"><label>Name</label><input id="locationName" placeholder="z. B. Lederrucksack"></div><div class="field wide"><label>Übergeordnet</label><select id="locationParent"></select></div></div><div class="toolbar-row"><button class="action-btn" id="addLocation">Ort hinzufügen</button></div></div>
+        <div class="comp-card"><h4>Gegenstand</h4><div class="form-grid"><div class="field wide item-name-wrap"><label>Name</label><input id="itemName" autocomplete="off" placeholder="Tippen für Vorschläge aus der Preisliste"><div id="priceSuggestions" class="price-suggestions hidden"></div><div class="catalog-hint"><span id="priceCatalogCount"></span> · Auswahl übernimmt Gewicht und Listenpreis.</div></div><div class="field"><label>Anzahl</label><input id="itemQty" type="number" min="0" step="1" value="1"></div><div class="field"><label>Art</label><select id="itemType"><option>Gegenstand</option><option>Alchemikum</option><option>Verbrauchsgut</option><option>Munition</option><option>Waffe</option><option>Rüstung</option><option>Kleidung</option><option>Buch</option><option>Zutat</option><option>Handelsgut</option><option>Magischer Gegenstand</option></select></div><div class="field wide"><label>Ort / Behälter</label><select id="itemLocation"></select></div><div class="field"><label>Qualität</label><input id="itemQuality" placeholder="z. B. E"></div><div class="field"><label>Gewicht</label><input id="itemWeight" placeholder="aus Preisliste"></div><div class="field"><label>Listenpreis</label><input id="itemPrice" placeholder="z. B. 3 S"></div><div class="field full"><label>Notiz</label><input id="itemNote"></div></div><div class="toolbar-row"><button class="action-btn primary" id="addItem">Gegenstand hinzufügen</button></div></div>
+      </div>
+      <div id="artifactCard" class="comp-card artifact-card">
+        <h4><span>Magische Gegenstände</span><span class="count" id="artifactCount"></span></h4>
+        <div class="subtle">Magische Eigenschaften gehören direkt zum Inventargegenstand. Waffen, Rüstungen, Ringe usw. bleiben deshalb ganz normal im Inventar; hier verwaltest du nur ihre Wirkungen.</div>
+        <div class="form-grid artifact-form">
+          <div class="field wide"><label>Inventargegenstand</label><select id="artifactItem"></select></div>
+          <div class="field"><label>Art</label><select id="artifactKind"><option>Artefakt</option><option>Matrixgeber</option><option>Gebundener Gegenstand</option><option>Magischer Gegenstand</option><option>Sonstiges</option></select></div>
+          <div class="field wide"><label>Wirkung / Zauber</label><input id="artifactEffectName" placeholder="z. B. Balsam oder Schutz vor Feuer"></div>
+          <div class="field"><label>Typ</label><select id="artifactEffectType"><option>Zauber</option><option>Artefaktwirkung</option><option>Ritual</option><option>Passiv</option><option>Sonstiges</option></select></div>
+          <div class="field wide"><label>Auslöser</label><input id="artifactActivation" placeholder="Wort, Berührung, Handlung …"></div>
+          <div class="field"><label>Ladungen aktuell</label><input id="artifactCharges" type="number" min="0" step="1" placeholder="∞"></div>
+          <div class="field"><label>Ladungen max.</label><input id="artifactMaxCharges" type="number" min="0" step="1" placeholder="∞"></div>
+          <div class="field"><label>ZfP*</label><input id="artifactZfp" type="number" min="0" placeholder="optional"></div>
+          <div class="field"><label>AsP</label><input id="artifactAsp" type="number" min="0" placeholder="optional"></div>
+          <div class="field wide"><label>Aufladung</label><input id="artifactRecharge" placeholder="z. B. einmal monatlich / nicht aufladbar"></div>
+          <div class="field full"><label>Notiz</label><input id="artifactEffectNote" placeholder="Varianten, Einschränkungen, bekannte Werte …"></div>
+        </div>
+        <div class="toolbar-row"><button class="action-btn primary" id="addArtifactEffect">Wirkung hinzufügen</button></div>
+        <div id="artifactList" class="artifact-list"></div>
+      </div>
+      <div class="comp-card money-card">
+        <h4><span>Geld</span><span class="count" id="moneyHeaderSummary"></span></h4>
+        <div class="subtle">Kleine Kasse im selben Datensatz. Buchungen können positiv oder negativ sein; Excel-Import übernimmt vorhandene D/S/H-Buchungen.</div>
+        <div id="moneySummary" class="money-summary"></div>
+        <div class="form-grid"><div class="field"><label>Dukaten</label><input id="moneyD" type="number" step="1" value="0"></div><div class="field"><label>Silber</label><input id="moneyS" type="number" step="1" value="0"></div><div class="field"><label>Heller</label><input id="moneyH" type="number" step="1" value="0"></div><div class="field"><label>Kreuzer</label><input id="moneyK" type="number" step="1" value="0"></div><div class="field wide"><label>Wofür / woher?</label><input id="moneyNote" placeholder="z. B. 5 D Belohnung oder -2 D Proviant"></div><div class="field"><button class="action-btn primary" id="addMoney">Buchen</button></div></div>
+        <div class="money-history"><button type="button" id="moneyHistoryToggle" class="money-history-toggle" aria-expanded="true"><span class="collapse-chevron" id="moneyHistoryChevron">▾</span><span>Ein- und Ausgaben</span><span class="count" id="moneyHistoryCount"></span></button><div id="moneyTransactions" class="money-list"></div></div>
+      </div>
+      <div id="inventoryRootDrop" class="inventory-root-drop inv-drop-zone" data-location-id="">Hierher ziehen = ohne Ort / auf oberste Ebene</div>
+      <div id="inventoryGroups" class="inv-groups"></div>
+    </section>
+
+    <section id="data" class="section active">
+      <div class="section-title"><h3>Daten & Synchronisation</h3><span id="cloudSyncBadge" class="sync-state"><span class="sync-dot"></span> lokal</span></div>
+
+      <div class="panel loader" style="margin-bottom:12px">
+        <div class="drop" id="dropzone">
+          <strong>Heldendatei öffnen</strong>
+          <p>Eine <code>.hld</code>- bzw. ZIP-Datei der Helden-Software lokal auswählen oder hier ablegen.</p>
+          <label class="filebtn" for="fileInput">Datei auswählen</label>
+          <input id="fileInput" type="file" accept=".hld,.ok,.zip,application/zip">
+          <div class="privacy">Die Datei wird nur in diesem Browser verarbeitet und nicht hochgeladen.</div>
+        </div>
+        <div id="loadStatus" class="status"></div>
+
+        <div class="cloud-loader" id="cloudLoader">
+          <div class="cloud-head"><strong>Oder direkt aus OneDrive</strong><span id="cloudAuthBadge" class="cloud-state"><span class="cloud-dot"></span> nicht verbunden</span></div>
+          <div class="subtle">Die HLD bleibt an ihrem bestehenden Ort und wird ausschließlich gelesen. HeldenMobil speichert nur seine eigenen JSON-Begleitdaten im OneDrive-App-Ordner.</div>
+          <div id="cloudProtocolWarning" class="protocol-warning cloud-hidden"></div>
+          <details class="cloud-config" id="cloudConfigDetails">
+            <summary>Microsoft-Verbindung</summary>
+            <div class="cloud-config-body">
+              <div class="small-note"><strong>HeldenMobil-App-ID ist fest integriert.</strong> Du musst die Client-ID nicht mehr eingeben.</div>
+              <div class="field full" style="margin-top:8px"><label>Redirect URI</label><div id="cloudRedirectUri" class="cloud-url"></div></div>
+              <div class="small-note" style="margin-top:8px">Delegierte Graph-Rechte: <strong>Files.Read</strong> + <strong>Files.ReadWrite.AppFolder</strong>.</div>
+            </div>
+          </details>
+          <div class="toolbar-row">
+            <button class="action-btn primary" id="cloudConnect">Mit Microsoft verbinden</button>
+            <button class="action-btn cloud-hidden" id="cloudDisconnect">Verbindung trennen</button>
+            <button class="action-btn cloud-hidden" id="cloudChooseHld">HLD in OneDrive wählen</button>
+            <button class="action-btn cloud-hidden" id="cloudReloadHld">Gespeicherte HLD laden</button>
+          </div>
+          <div id="cloudSelectedHld" class="cloud-selected cloud-hidden"></div>
+          <div id="cloudBrowse" class="cloud-browser cloud-hidden">
+            <div class="cloud-browser-head"><button class="mini-btn" id="cloudBrowseBack">←</button><strong id="cloudBrowseTitle">OneDrive</strong><button class="mini-btn" id="cloudBrowseClose">×</button></div>
+            <div id="cloudBrowseItems" class="cloud-items"></div>
+          </div>
+          <div id="cloudLoaderMessage" class="cloud-message"></div>
+        </div>
+      </div>
+
+      <div class="comp-card data-ui-card">
+        <div class="ui-setting-row"><div><h4>Darstellung &amp; Bedienung</h4><div class="subtle">Tabs lassen sich ziehen und ihre Reihenfolge wird auf diesem Gerät gespeichert. Der Würfeltisch kann auf Wunsch ohne Rollanimation arbeiten.</div></div><label class="toggle-switch"><input id="diceAnimationToggle" type="checkbox" checked> Würfelanimation</label></div>
+      </div>
+
+      <div class="comp-grid hero-data-only">
+        <div class="comp-card"><h4>Begleitdaten dieses Helden</h4><p class="subtle">Die HLD bleibt read-only. Abenteuer mit jeweiligem Spielstand, Inventar, Geld und Steigerungswünsche liegen in einem separaten, versionierten JSON-Datensatz.</p><div class="toolbar-row"><button class="action-btn primary" id="exportCompanion">JSON exportieren</button><label class="action-btn" for="importCompanion">JSON importieren</label><input id="importCompanion" type="file" accept="application/json,.json" hidden><button class="danger-btn" id="resetCompanion">Begleitdaten zurücksetzen</button></div><div class="data-box" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><strong>Lokale Sicherungen</strong><span id="backupCount" class="count">0/5 Stände</span></div><div class="subtle" style="margin-top:5px">HeldenMobil hält bis zu 5 ältere Stände dieses Helden in IndexedDB. Das entlastet den knappen localStorage und schützt vor versehentlichen Änderungen, aber nicht vor dem Löschen der Browserdaten – dafür eine Sicherung zusätzlich als JSON exportieren.</div><div class="toolbar-row"><select id="backupSelect" class="comp-input" style="min-width:260px;flex:1"><option value="">Noch keine Sicherung</option></select><button type="button" class="action-btn" id="backupNow">Jetzt sichern</button><button type="button" class="action-btn" id="backupRestore" disabled>Wiederherstellen</button><button type="button" class="action-btn" id="backupExport" disabled>Sicherung exportieren</button></div><div id="backupMessage" class="cloud-message"></div></div><div id="dataMeta" class="data-box"></div></div>
+        <div class="comp-card"><h4>OneDrive-Speicher</h4><div class="cloud-syncbox"><p class="subtle" style="margin:0">Die HLD wird nur gelesen. Die JSON-Begleitdaten dieses Helden liegen im App-Ordner von HeldenMobil und werden mit der lokalen Arbeitskopie abgeglichen.</p><div id="cloudDataState" class="data-box"><strong>Noch nicht verbunden</strong></div><div class="cloud-syncrow"><button class="action-btn" id="cloudDataChooseHld">Andere HLD wählen</button><button class="action-btn" id="cloudLoadData">Aus OneDrive laden</button><button class="action-btn primary" id="cloudSaveData">Jetzt speichern</button><label class="cloud-check"><input id="cloudAutoSync" type="checkbox" checked> automatisch speichern</label></div><div id="cloudSyncMessage" class="cloud-message"></div><div id="cloudConflict" class="cloud-conflict cloud-hidden"><strong>Synchronisationskonflikt</strong><div class="small-note" style="margin-top:4px">Die OneDrive-Datei hat sich seit dem letzten Laden geändert. Nichts wird automatisch überschrieben.</div><div class="toolbar-row"><button class="action-btn" id="cloudConflictLoad">OneDrive-Version laden</button><button class="danger-btn" id="cloudConflictOverwrite">Lokale Version überschreiben</button></div></div></div></div>
+      </div>
+
+      <div class="comp-card quality-audit-card hero-data-only">
+        <div class="quality-audit-head"><div><h4>HLD-Qualitätsprüfung</h4><div class="subtle">Prüft alle Helden der aktuell geladenen HLD mit demselben Parser wie die normale Anzeige. Gesucht werden vor allem nicht klassifizierte Talente, unvollständige Zauber, verdächtige Vor-/Nachteile, Spezialisierungsreste sowie fehlende Kampf- und Rüstungsreferenzen.</div></div><button type="button" class="action-btn primary" id="runQualityAudit">Alle Helden prüfen</button></div>
+        <div class="toolbar-row quality-audit-actions"><button type="button" class="action-btn" id="copyQualityAudit" disabled>Prüfbericht kopieren</button><button type="button" class="action-btn" id="exportQualityAudit" disabled>Bericht als JSON</button><span id="qualityCopyState" class="quality-copy-state"></span></div>
+        <div id="qualityAuditResult"><div class="empty-comp">Noch keine Prüfung ausgeführt.</div></div>
+      </div>
+    </section>
+
+  </main>
+  <div id="globalDiceBar" class="dice-bar hero-only" aria-label="Schnellwürfel">
+    <button type="button" data-global-roll="d20">1W20</button><button type="button" data-global-roll="3d20">3W20</button><button type="button" data-global-roll="d6">1W6</button><button type="button" data-global-roll="xd6">×W6</button><button type="button" class="zone-btn" data-global-roll="zone">Zone</button>
+  </div>
+</section>
+<div id="diceOverlay" class="dice-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="diceTitle">
+  <div class="dice-dialog">
+    <div class="dice-dialog-head"><div><h3 id="diceTitle">Würfeltisch</h3><div id="diceSubtitle" class="dice-subtitle"></div></div><button id="diceClose" class="dice-close" aria-label="Schließen">×</button></div>
+    <div id="diceControls" class="dice-controls"></div>
+    <div class="felt-wrap"><div class="dice-felt"><div id="diceStage" class="dice-stage"></div><div id="diceResult" class="dice-result"></div></div></div>
+  </div>
+</div>
+<footer>HeldenMobil Beta v20.3.2 · HLD read-only · Begleitdaten + OneDrive-Sync · Spieltisch</footer>
+</div>
+
+<script src="vendor/jszip-3.10.1.min.js"></script>
+<script src="js/hld-parser.js"></script>
+<script src="js/companion-core.js"></script>
+<script src="js/combat-core.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
