@@ -1,0 +1,41 @@
+{
+  "source": "user-supplied helden.zip.hld; raw file intentionally not committed",
+  "heroes": 34,
+  "specialAbilities": {
+    "distinct": 405,
+    "classes": {
+      "alreadyAutomatedHeldenMobil": 16,
+      "activeCombatRule": 61,
+      "dataOrContextMetadata": 103,
+      "magicHookOrMetadata": 91,
+      "karmalHookOrMetadata": 39,
+      "otherManualOrPassive": 95
+    }
+  },
+  "spells": {
+    "entries": 374,
+    "distinct": 162,
+    "multipleRepresentationDistinct": 46,
+    "checkReadyDistinct": 162,
+    "entryFieldPresence": {
+      "name": 374,
+      "probe": 374,
+      "value": 374,
+      "representation": 374,
+      "complexity": 374,
+      "nonEmptyCost": 0,
+      "nonEmptyRange": 0,
+      "nonEmptyCastingTime": 0,
+      "nonEmptyDuration": 0
+    },
+    "representationEntries": {
+      "Magier": 229,
+      "Achaz": 84,
+      "Elf": 18,
+      "Schelm": 18,
+      "Magiedilletant": 17,
+      "Borbaradianer": 7,
+      "Druide": 1
+    }
+  }
+}
