@@ -4,6 +4,18 @@
 
 DSA 4.1 Heldentool für HLD-Dateien mit lokalen Begleitdaten und optionalem OneDrive-Sync.
 
+## Phase II / Shared-Maze-Integration
+
+Die experimentelle Weiterentwicklung des DSA-Regelkerns findet ausschließlich in diesem Lab statt. Das produktive HeldenMobil bleibt davon getrennt.
+
+Aktueller Arbeitsschritt:
+
+- **AP19.0 – DSA 4.1 Rule-Core Audit & Reuse-Matrix:** `docs/ap19-rule-core-audit.md`
+- danach **AP19.1 – browserunabhängiger DSA41 Rule Core**
+- anschließend **AP19.2 – versionierter HeldenMobil-/Shared-Maze-Bridge-Vertrag**
+
+Grundsatz: Die offiziellen DSA-4.1-Regelwerke definieren das erwartete Regelverhalten. Lizenzkompatible Open-Source-Projekte liefern Algorithmen, Architekturideen und Regressionstest-Fälle; Regeltexte, Tabellen, Grafiken und Kompendiumsdaten werden nicht übernommen.
+
 ## Quellstruktur ab v20.3.2
 
 - `index.html` – HTML/CSS und statische Oberfläche
