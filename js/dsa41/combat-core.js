@@ -8,7 +8,11 @@
   'use strict';
   if(!legacy)throw new Error('HeldenMobilCombat is required');
   if(!checks)throw new Error('HeldenMobilDsa41Check is required');
-  function combatCheck({kind='attack',target,modifier=0,roll}){return {...checks.checkAttribute({value:target,modifier,roll}),type:'combat',kind};}
+  function combatCheck({kind='attack',target,modifier=0,roll}){
+    const base=checks.checkAttribute({value:target,modifier,roll}),naturalOne=base.roll===1,naturalTwenty=base.roll===20;
+    const success=naturalOne?true:naturalTwenty?false:base.success;
+    return {...base,success,type:'combat',kind,requiresConfirmation:naturalOne||naturalTwenty,confirmationKind:naturalOne?'critical-success':naturalTwenty?'fumble':null};
+  }
   return {
     combatEbe:legacy.combatEbe,
     adjustCombatForBE:legacy.adjustCombatForBE,
