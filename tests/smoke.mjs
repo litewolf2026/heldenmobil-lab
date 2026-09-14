@@ -23,7 +23,7 @@ ok(app.includes('HeldenMobilCombat.combatEbe'), 'combat core delegate missing');
 ok(app.includes("function automaticEvent(e){return e?.type==='energy';}"), 'wound/status events must remain manually managed');
 ok(app.includes("lastQualityAudit={version:'20.3.2'"), 'quality audit JSON version must be v20.3.2');
 ok(app.includes("cloudState.conflictHeroKey===key&&!force"), 'unresolved OneDrive conflict must block automatic save');
-ok(app.includes("COMPANION_BACKUP_DB='HeldenMobilBackups'") && app.includes('indexedDB.open'), 'IndexedDB companion snapshot storage missing');
+ok(app.includes("COMPANION_BACKUP_DB='HeldenMobilLabBackups'") && app.includes('indexedDB.open'), 'IndexedDB companion snapshot storage missing');
 ok(app.includes('COMPANION_BACKUP_LIMIT=5'), 'backup history must be limited to five snapshots');
 ok(index.includes('id="backupRestore"') && index.includes('id="backupExport"'), 'backup restore/export UI missing');
 ok(app.includes('Letzter erfolgreicher OneDrive-Sync:'), 'last successful sync timestamp missing');

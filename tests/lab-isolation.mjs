@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const app=fs.readFileSync('js/app.js','utf8');
+const index=fs.readFileSync('index.html','utf8');
+assert.match(app,/heldenmobil-lab:/);
+assert.doesNotMatch(app,/['\"\`]heldenmobil:/);
+assert.match(app,/HeldenMobilLabBackups/);
+assert.match(app,/const HELDENMOBIL_LAB_MODE=true;/);
+assert.match(app,/return !HELDENMOBIL_LAB_MODE/);
+assert.match(app,/lab-hero-/);
+assert.match(index,/HeldenMobil LAB/);
+assert.match(index,/HELDENMOBIL LAB · EXPERIMENTAL/);
+console.log('lab-isolation: OK');

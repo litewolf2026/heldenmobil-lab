@@ -1,3 +1,5 @@
+> **HeldenMobil LAB** – experimenteller Entwicklungszweig auf Basis von HeldenMobil v20.3.2. Browserdaten und Backups sind vom Produktivsystem getrennt; OneDrive ist im Lab zunächst deaktiviert.
+
 # HeldenMobil
 
 DSA 4.1 Heldentool für HLD-Dateien mit lokalen Begleitdaten und optionalem OneDrive-Sync.
