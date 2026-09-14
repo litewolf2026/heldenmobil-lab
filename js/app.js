@@ -1346,8 +1346,9 @@ function bridgeParsedHeroes(){
   return (state.heroes||[]).map(raw=>state.current?.key===raw.key?state.current:parseHero(raw));
 }
 function bridgeEnergyState(hero){
+  if(state.current?.key!==hero.key)return {};
   const maxima=new Map(deriveBasis(hero.props).map(item=>[item.name,Number(item.value)]));
-  const live=state.current?.key===hero.key?activeAdventureStatus():null,out={};
+  const live=activeAdventureStatus(),out={};
   for(const label of ['LeP','AuP','AsP','KaP']){
     if(!maxima.has(label))continue;
     const max=Math.max(0,Number(maxima.get(label))||0),statusKey=statusKeyFor(label);
