@@ -63,7 +63,7 @@
     const a=obj(value,`ability[${index}]`),attrs=stringArray(a.attributes??[],`ability[${index}].attributes`);
     if(attrs.length&&attrs.length!==3)throw new RangeError(`ability[${index}].attributes must contain three entries when present`);
     const out={key:str(a.key??a.name,`ability[${index}].key`),name:str(a.name??a.key,`ability[${index}].name`),value:finite(a.value,`ability[${index}].value`),attributes:attrs};
-    if(spell){out.representation=str(a.representation??'',`ability[${index}].representation`,{empty:true});out.complexity:a.complexity==null?null:clone(a.complexity);}
+    if(spell){out.representation=str(a.representation??'',`ability[${index}].representation`,{empty:true});out.complexity=a.complexity==null?null:clone(a.complexity);}
     return out;
   }
   function normalizeAbilities(values,options){if(values==null)return[];if(!Array.isArray(values))throw new TypeError('abilities must be an array');return values.map((value,index)=>normalizeAbility(value,index,options));}
