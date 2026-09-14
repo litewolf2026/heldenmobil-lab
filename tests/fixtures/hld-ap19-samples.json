@@ -1,0 +1,23 @@
+{
+  "source": "anonymized values derived from the user-supplied helden.zip.hld on 2026-09-14; raw HLD is intentionally not committed",
+  "coverage": {
+    "heroes": 34,
+    "talentEntries": 2210,
+    "talentsDistinct": 179,
+    "spellEntries": 374,
+    "spellsDistinct": 162,
+    "sfEntries": 1205,
+    "sfDistinct": 405,
+    "liturgiesDistinct": 38,
+    "combatTalentsDistinct": 14,
+    "meleeItems": 30,
+    "rangedItems": 21,
+    "shieldItems": 9,
+    "armorItems": 48
+  },
+  "samples": {
+    "martial": {"probe":[18,18,15],"talentValue":18,"combat":{"at":21,"pa":17,"iniBase":14},"sf":["Kampfreflexe","Kampfgespür","Finte","Wuchtschlag","Schildkampf II","Parierwaffen II","Beidhändiger Kampf II","Klingentänzer"]},
+    "magic": {"probe":[18,13,13],"spellValue":16,"mrProperty":2,"resources":{"AsP":23}},
+    "karmal": {"probe":[16,15,13],"liturgyKnowledge":15,"resources":{"KaP":35}}
+  }
+}
