@@ -36,11 +36,11 @@ eq(companion.decideCloudWrite({remoteExists:true,currentEtag:'B',baselineEtag:'A
 eq(companion.decideCloudWrite({force:true,remoteExists:true,currentEtag:'B',baselineEtag:'A'}),'write','explicit force overwrite');
 const snapshots=Array.from({length:12},(_,i)=>({id:`s${i}`,at:new Date(Date.parse('2026-08-31T08:00:00Z')+i*60000).toISOString(),data:{heroKey:'h',updatedAt:String(i)}}));const trimmed=companion.normalizeSnapshotList(snapshots,5);eq([trimmed.length,trimmed[0].id,trimmed.at(-1).id],[5,'s11','s7'],'snapshot history keeps newest five');eq(companion.addSnapshot(trimmed,{id:'s12',at:'2026-08-31T08:12:00Z',data:{heroKey:'h'}},5)[0].id,'s12','new snapshot becomes newest');eq(companion.normalizeSnapshotList(snapshots).length,5,'snapshot default limit is five');
 
-// v20.3 existing combat behavior frozen as regression tests
+// v20.3 combat behavior. AP19.1b corrected TP/KK to full-step semantics (WdS + MeisterGeister).
 const meta={Schwerter:{offset:2},Hiebwaffen:{offset:4}};
 eq(combat.combatEbe('Schwerter',4,meta),2,'Schwerter eBE');eq(combat.combatEbe('Hiebwaffen',3,meta),0,'eBE floor');
 eq(combat.adjustCombatForBE(15,14,3),{at:14,pa:12},'odd eBE distribution');
-eq(combat.finalDamage([1,6,2],[11,4],15),[1,6,3],'TP/KK bonus');eq(combat.finalDamage([1,6,2],[11,4],10),[1,6,1],'TP/KK penalty');
+eq(combat.finalDamage([1,6,2],[11,4],15),[1,6,3],'TP/KK bonus');eq(combat.finalDamage([1,6,2],[11,4],10),[1,6,2],'TP/KK no penalty before full step');eq(combat.finalDamage([1,6,2],[11,4],7),[1,6,1],'TP/KK full-step penalty');eq(combat.tpkkModifier([13,3],12),{damage:0,combatPenalty:0},'TP/KK one below threshold');eq(combat.tpkkModifier([13,3],10),{damage:-1,combatPenalty:1},'TP/KK full step below threshold');
 eq(combat.zoneFromD20(20).key,'kopf','zone head');eq(combat.zoneFromD20(15).key,'brust','zone chest');eq(combat.zoneFromD20(9).key,'linkerarm','zone left arm');eq(combat.zoneFromD20(10).key,'rechterarm','zone right arm');eq(combat.zoneFromD20(7).key,'bauch','zone abdomen');eq(combat.zoneFromD20(1).key,'linkesbein','zone left leg');eq(combat.zoneFromD20(2).key,'rechtesbein','zone right leg');
 
 console.log('HeldenMobil v20.1-v20.3.2 core regression tests passed');
