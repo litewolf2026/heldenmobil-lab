@@ -21,7 +21,7 @@ if (!app.includes(labCloudCapable)) throw new Error('Lab cloud hard stop not ins
 
 app = app.replace(
   "function cloudCompanionFileName(heroKey){return `hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}",
-  "function cloudCompanionFileName(heroKey){return `lab-hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}`
+  "function cloudCompanionFileName(heroKey){return `lab-hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}`"
 );
 
 const oldCloudError = "if(!cloudCapable()){cloudMessage('OneDrive-Anmeldung funktioniert aus Sicherheitsgründen nicht aus einer file://-Datei. Bitte HeldenMobil über HTTPS oder localhost öffnen.','error');return;}";
