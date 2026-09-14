@@ -4,6 +4,7 @@
   else root.HeldenMobilDsa41Maneuvers=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
+  const WUCHTSCHLAG_TALENTS=new Set(['Anderthalbhänder','Hiebwaffen','Infanteriewaffen','Kettenstäbe','Kettenwaffen','Raufen','Ringen','Säbel','Schwerter','Stäbe','Zweihandflegel','Zweihand-Hiebwaffen','Zweihandschwerter/-säbel']);
   const EXCLUDED_FINTE_TALENTS=new Set(['Kettenwaffen','Peitschen','Zweihandflegel','Zweihand-Hiebwaffen']);
   const n=(v,label)=>{const out=Number(v);if(!Number.isFinite(out))throw new TypeError(`${label} must be finite`);return out;};
   function validateAnnouncement({announcement,taw,at}={}){
@@ -12,8 +13,10 @@
     const max=Math.max(0,Math.min(talent,attack));if(value>max)throw new RangeError(`announcement ${value} exceeds maximum ${max}`);
     return {announcement:value,max,taw:talent,at:attack};
   }
-  function wuchtschlag({announcement,taw,at,hasSf=false}={}){
-    const valid=validateAnnouncement({announcement,taw,at}),damageBonus=hasSf?valid.announcement:Math.ceil(valid.announcement/2);
+  function wuchtschlag({announcement,taw,at,hasSf=false,weaponTalent=''}={}){
+    const valid=validateAnnouncement({announcement,taw,at}),talent=String(weaponTalent||'');
+    if(talent&&!WUCHTSCHLAG_TALENTS.has(talent))return {type:'wuchtschlag',allowed:false,reason:'weapon-talent',announcement:valid.announcement};
+    const damageBonus=hasSf?valid.announcement:Math.ceil(valid.announcement/2);
     return {type:'wuchtschlag',allowed:true,announcement:valid.announcement,attackDifficulty:valid.announcement,damageBonus,failurePenalty:valid.announcement,hasSf:!!hasSf};
   }
   function finte({announcement,taw,at,hasSf=false,be=0,shield=false,smallShield=false,weaponTalent=''}={}){
@@ -26,9 +29,10 @@
   function splitWuchtschlagFinte({damageAnnouncement=0,defenseAnnouncement=0,taw,at,hasWuchtschlag=false,hasFinte=false,be=0,shield=false,smallShield=false,weaponTalent=''}={}){
     const damage=n(damageAnnouncement,'damageAnnouncement'),defense=n(defenseAnnouncement,'defenseAnnouncement'),total=damage+defense;
     validateAnnouncement({announcement:total,taw,at});
-    const ws=wuchtschlag({announcement:damage,taw,at,hasSf:hasWuchtschlag}),ft=finte({announcement:defense,taw,at,hasSf:hasFinte,be,shield,smallShield,weaponTalent});
+    const ws=wuchtschlag({announcement:damage,taw,at,hasSf:hasWuchtschlag,weaponTalent}),ft=finte({announcement:defense,taw,at,hasSf:hasFinte,be,shield,smallShield,weaponTalent});
+    if(!ws.allowed)return {...ws,type:'wuchtschlag-finte',damageAnnouncement:damage,defenseAnnouncement:defense};
     if(!ft.allowed)return {...ft,type:'wuchtschlag-finte',damageAnnouncement:damage,defenseAnnouncement:defense};
     return {type:'wuchtschlag-finte',allowed:true,announcement:total,damageAnnouncement:damage,defenseAnnouncement:defense,attackDifficulty:total+ft.shieldDifficulty,damageBonus:ws.damageBonus,defenseDifficulty:ft.defenseDifficulty,failurePenalty:total,shieldDifficulty:ft.shieldDifficulty};
   }
-  return {EXCLUDED_FINTE_TALENTS,validateAnnouncement,wuchtschlag,finte,splitWuchtschlagFinte};
+  return {WUCHTSCHLAG_TALENTS,EXCLUDED_FINTE_TALENTS,validateAnnouncement,wuchtschlag,finte,splitWuchtschlagFinte};
 });
