@@ -29,7 +29,7 @@ eq([handled.handled,handled.reason,src.calls.length,listCalls],[false,'origin-re
 
 src=source();ev=event({sourceRef:src,payload:{capabilities:['hero:list','check:execute:v1','unknown']}});handled=await server.handleMessage(ev);
 eq(handled.response.type,'bridge.hello.result','hello succeeds');
-eq(handled.response.payload.capabilities,['hero:list','check:execute:v1'],'hello negotiates only available requested capabilities');
+eq(handled.response.payload.capabilities,['check:execute:v1','hero:list'],'hello negotiates only available requested capabilities in canonical order');
 eq(src.calls[0].origin,'https://maze.example','reply uses exact incoming origin, never wildcard');
 
 src=source();ev=event({sourceRef:src,messageId:'m2',type:'hero.list'});handled=await server.handleMessage(ev);
