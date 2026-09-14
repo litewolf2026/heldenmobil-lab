@@ -19,10 +19,8 @@ const labCloudCapable = "function cloudCapable(){return !HELDENMOBIL_LAB_MODE&&(
 if (app.includes(productionCloudCapable)) app = app.replace(productionCloudCapable, labCloudCapable);
 if (!app.includes(labCloudCapable)) throw new Error('Lab cloud hard stop not installed');
 
-app = app.replace(
-  "function cloudCompanionFileName(heroKey){return `hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}",
-  "function cloudCompanionFileName(heroKey){return `lab-hero-${String(heroKey||'unknown').replace(/[^a-zA-Z0-9._-]/g,'_')}.json`;}`"
-);
+app = app.replace('return `hero-${String(heroKey', 'return `lab-hero-${String(heroKey');
+if (!app.includes('return `lab-hero-${String(heroKey')) throw new Error('Lab cloud filename isolation not installed');
 
 const oldCloudError = "if(!cloudCapable()){cloudMessage('OneDrive-Anmeldung funktioniert aus Sicherheitsgründen nicht aus einer file://-Datei. Bitte HeldenMobil über HTTPS oder localhost öffnen.','error');return;}";
 const newCloudError = "if(!cloudCapable()){cloudMessage(HELDENMOBIL_LAB_MODE?'HeldenMobil LAB: OneDrive ist absichtlich deaktiviert, damit keine Produktivdaten verändert werden.':'OneDrive-Anmeldung funktioniert aus Sicherheitsgründen nicht aus einer file://-Datei. Bitte HeldenMobil über HTTPS oder localhost öffnen.','error');return;}";
