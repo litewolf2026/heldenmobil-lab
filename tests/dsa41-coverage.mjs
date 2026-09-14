@@ -1,4 +1,5 @@
 import {createRequire} from 'node:module';
+import fs from 'node:fs';
 const require=createRequire(import.meta.url);
 const combat=require('../js/combat-core.js');
 const heroCombat=require('../js/dsa41/hero-combat-core.js');
@@ -6,10 +7,17 @@ const wounds=require('../js/dsa41/wound-core.js');
 const conditions=require('../js/dsa41/condition-core.js');
 const maneuvers=require('../js/dsa41/maneuver-core.js');
 const magic=require('../js/dsa41/magic-core.js');
+const hldCoverage=JSON.parse(fs.readFileSync(new URL('./fixtures/hld-ap19-coverage.json',import.meta.url),'utf8'));
 
 function eq(actual,expected,label){const a=JSON.stringify(actual),e=JSON.stringify(expected);if(a!==e)throw new Error(`${label}: expected ${e}, got ${a}`);}
 function ok(value,label){if(!value)throw new Error(label);}
 function throws(fn,label){let did=false;try{fn();}catch(_){did=true;}if(!did)throw new Error(`${label}: expected exception`);}
+
+// Real-HLD coverage is anonymized but kept machine-verifiable.
+eq(hldCoverage.heroes,34,'HLD hero coverage');
+eq(Object.values(hldCoverage.specialAbilities.classes).reduce((a,b)=>a+b,0),405,'all distinct HLD SF classified');
+eq([hldCoverage.spells.distinct,hldCoverage.spells.checkReadyDistinct],[162,162],'all distinct HLD spells are check-ready');
+eq([hldCoverage.spells.entryFieldPresence.nonEmptyCost,hldCoverage.spells.entryFieldPresence.nonEmptyRange,hldCoverage.spells.entryFieldPresence.nonEmptyCastingTime,hldCoverage.spells.entryFieldPresence.nonEmptyDuration],[0,0,0,0],'HLD is not a spell-effect database');
 
 // MeisterGeister Kampf_Tests.cs TP/KK 13/3 numeric regression oracle.
 for(const [kk,expected] of [[10,-1],[12,0],[14,0],[16,1],[18,1],[20,2],[21,2]]){
