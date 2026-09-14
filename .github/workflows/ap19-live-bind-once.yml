@@ -1,0 +1,105 @@
+name: AP19.3b one-shot live bridge binding
+
+on:
+  push:
+    branches:
+      - ap19-live-provider-v1
+
+permissions:
+  contents: write
+
+jobs:
+  bind-live-provider:
+    if: ${{ !contains(github.event.head_commit.message, 'AP19.3b: bind live Lab bridge') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ap19-live-provider-v1
+          fetch-depth: 0
+      - name: Patch script loading and explicit provider registration
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index_path = Path('index.html')
+          index = index_path.read_text(encoding='utf-8')
+          old = '''<script src="js/combat-core.js"></script>\n<script src="js/app.js"></script>'''
+          new = '''<script src="js/combat-core.js"></script>\n<script src="js/dsa41/check-core.js"></script>\n<script src="js/dsa41/magic-core.js"></script>\n<script src="js/bridge-contract-v1.js"></script>\n<script src="js/bridge-browser-adapter.js"></script>\n<script src="js/bridge-heldenmobil-provider.js"></script>\n<script src="js/app.js"></script>'''
+          if 'js/bridge-heldenmobil-provider.js' not in index:
+              if old not in index:
+                  raise SystemExit('index script anchor not found')
+              index = index.replace(old, new, 1)
+              index_path.write_text(index, encoding='utf-8')
+
+          app_path = Path('js/app.js')
+          app = app_path.read_text(encoding='utf-8')
+          sentinel = '// AP19.3b live bridge provider binding'
+          injection = r'''
+
+          // AP19.3b live bridge provider binding
+          function bridgeParsedHeroes(){
+            return (state.heroes||[]).map(raw=>state.current?.key===raw.key?state.current:parseHero(raw));
+          }
+          function bridgeEnergyState(hero){
+            const maxima=new Map(deriveBasis(hero.props).map(item=>[item.name,Number(item.value)]));
+            const live=state.current?.key===hero.key?activeAdventureStatus():null,out={};
+            for(const label of ['LeP','AuP','AsP','KaP']){
+              if(!maxima.has(label))continue;
+              const max=Math.max(0,Number(maxima.get(label))||0),statusKey=statusKeyFor(label);
+              const rawCurrent=live&&statusKey&&live[statusKey]!=null?Number(live[statusKey]):max;
+              out[label]={current:Math.max(0,Math.min(max,Number.isFinite(rawCurrent)?rawCurrent:max)),max};
+            }
+            return out;
+          }
+          function bridgeCombatState(hero){
+            const pm=propMap(hero.props),out={
+              atBasis:currentAttr(pm,'at'),paBasis:currentAttr(pm,'pa'),fkBasis:currentAttr(pm,'fk'),iniBase:currentAttr(pm,'ini'),
+              combatTalents:(hero.combat||[]).map(row=>({name:row.name,at:row.at,pa:row.pa}))
+            };
+            if(state.current?.key===hero.key){
+              const set=hero.combatSets?.[state.combatSet]||hero.combatSets?.[0];
+              if(set){const armor=setArmor(set);out.rs=armor.rs;out.be=armor.be;out.armorZones=armor.zones;}
+            }
+            return out;
+          }
+          function bridgeSourceGuard(event){
+            const fromOpener=!!window.opener&&event.source===window.opener;
+            const fromParent=window.parent&&window.parent!==window&&event.source===window.parent;
+            return !!(fromOpener||fromParent);
+          }
+          if(typeof HeldenMobilBridgeProviderV1!=='undefined'&&typeof HeldenMobilBrowserBridgeV1!=='undefined'){
+            const bridgeProvider=HeldenMobilBridgeProviderV1.createProvider({
+              getHeroes:bridgeParsedHeroes,
+              getEnergyState:bridgeEnergyState,
+              getCombatState:bridgeCombatState,
+              rollDie:secureDie
+            });
+            window.HeldenMobilBridgeSessionV1=HeldenMobilBrowserBridgeV1.installWindowBridge({
+              allowedOrigins:[window.location.origin],
+              allowedCapabilities:['hero:list','hero:snapshot:v1','check:execute:v1'],
+              provider:bridgeProvider,
+              sourceGuard:bridgeSourceGuard
+            });
+          }
+          '''
+          if sentinel not in app:
+              marker='\n})();'
+              pos=app.rfind(marker)
+              if pos < 0:
+                  raise SystemExit('app closure anchor not found')
+              app=app[:pos]+injection+app[pos:]
+              app_path.write_text(app,encoding='utf-8')
+          PY
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/ap19-live-bind-once.yml
+      - name: Commit live binding
+        shell: bash
+        run: |
+          git config user.name "Litewolf AP19 automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html js/app.js .github/workflows/ap19-live-bind-once.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "AP19.3b: bind live Lab bridge"
+          git push origin HEAD:ap19-live-provider-v1
