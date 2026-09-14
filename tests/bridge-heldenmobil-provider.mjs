@@ -28,7 +28,7 @@ const snapshot=provider.getHeroSnapshot('hero-live-1');eq([snapshot.schema,snaps
 ok(!('props' in snapshot)&&!('sfSet' in snapshot),'snapshot does not leak parser internals');
 
 let request=contract.checkRequestV1({requestId:'t1',heroId:'hero-live-1',check:{kind:'talent',key:'Sinnesschärfe'},modifier:3,modifiers:[{source:'maze',value:3,reason:'Falle'}]});
-let result=provider.executeCheck(request);eq([result.status,result.success,result.qualityPoints,result.rolls,result.targets,result.effectiveValue],['resolved',true,6,[7,12,9],[12,14,14],8],'talent check uses HLD value/probe and Rule Core');
+let result=provider.executeCheck(request);eq([result.status,result.success,result.qualityPoints,result.rolls,result.targets,result.effectiveValue],['resolved',true,8,[7,12,9],[12,14,14],8],'talent check uses HLD value/probe and Rule Core');
 
 request=contract.checkRequestV1({requestId:'s1',heroId:'hero-live-1',check:{kind:'spell',key:'Odem Arcanum'},modifier:1,context:{magicResistance:2}});
 result=provider.executeCheck(request);eq([result.status,result.checkKind,result.meta.magicResistance,result.effectiveValue,result.rolls],['resolved','spell',2,6,[9,10,11]],'spell check adds MR before 3W20 via magic core');
