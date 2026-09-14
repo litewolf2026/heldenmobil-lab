@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   bind-live-provider:
-    if: ${{ !contains(github.event.head_commit.message, 'AP19.3b: bind live Lab bridge') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
