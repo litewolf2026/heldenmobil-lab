@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heldenmobil.local/contracts/bridge-v1.schema.json",
+  "title": "HeldenMobil DSA 4.1 Bridge Contract V1",
+  "oneOf": [
+    {"$ref": "#/$defs/HeroSnapshotV1"},
+    {"$ref": "#/$defs/CheckRequestV1"},
+    {"$ref": "#/$defs/CheckResultV1"},
+    {"$ref": "#/$defs/ResourceDeltaV1"},
+    {"$ref": "#/$defs/CombatActionV1"},
+    {"$ref": "#/$defs/CombatResultV1"}
+  ],
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "required": ["schema", "version"],
+      "properties": {"version": {"const": 1}}
+    },
+    "Modifier": {
+      "type": "object",
+      "required": ["source", "value", "reason", "kind"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "value": {"type": "number"},
+        "reason": {"type": "string"},
+        "kind": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "Effect": {
+      "type": "object",
+      "required": ["type", "source", "target", "payload", "duration", "requiresConfirmation"],
+      "properties": {
+        "type": {"enum": ["modifier", "damage", "heal", "resource", "state", "manual"]},
+        "source": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "payload": {"type": "object"},
+        "duration": {},
+        "requiresConfirmation": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "Ability": {
+      "type": "object",
+      "required": ["key", "name", "value", "attributes"],
+      "properties": {
+        "key": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "value": {"type": "number"},
+        "attributes": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 0, "maxItems": 3},
+        "representation": {"type": "string"},
+        "complexity": {}
+      },
+      "additionalProperties": false
+    },
+    "HeroSnapshotV1": {
+      "allOf": [
+        {"$ref": "#/$defs/Header"},
+        {
+          "type": "object",
+          "required": ["schema", "version", "heroId", "name", "attributes", "energies", "talents", "spells", "combat", "capabilities", "display", "source"],
+          "properties": {
+            "schema": {"const": "HeroSnapshotV1"},
+            "heroId": {"type": "string", "minLength": 1},
+            "name": {"type": "string", "minLength": 1},
+            "attributes": {"type": "object", "additionalProperties": {"type": "number"}},
+            "energies": {"type": "object", "additionalProperties": {"type": "object", "required": ["current", "max"], "properties": {"current": {"type": "number", "minimum": 0}, "max": {"type": "number", "minimum": 0}}, "additionalProperties": false}},
+            "talents": {"type": "array", "items": {"$ref": "#/$defs/Ability"}},
+            "spells": {"type": "array", "items": {"$ref": "#/$defs/Ability"}},
+            "combat": {"type": "object"},
+            "capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "display": {"type": "object"},
+            "source": {"type": "object"}
+          }
+        }
+      ]
+    },
+    "CheckDescriptor": {
+      "type": "object",
+      "required": ["kind", "key", "label", "mode"],
+      "properties": {
+        "kind": {"enum": ["attribute", "talent", "spell", "liturgy", "attack", "parry", "ranged"]},
+        "key": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "mode": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "CheckRequestV1": {
+      "allOf": [
+        {"$ref": "#/$defs/Header"},
+        {
+          "type": "object",
+          "required": ["schema", "version", "requestId", "heroId", "check", "modifier", "modifiers", "context"],
+          "properties": {
+            "schema": {"const": "CheckRequestV1"},
+            "requestId": {"type": "string", "minLength": 1},
+            "heroId": {"type": "string", "minLength": 1},
+            "check": {"$ref": "#/$defs/CheckDescriptor"},
+            "modifier": {"type": "number"},
+            "modifiers": {"type": "array", "items": {"$ref": "#/$defs/Modifier"}},
+            "context": {"type": "object"}
+          }
+        }
+      ]
+    },
+    "ResourceDeltaV1": {
+      "allOf": [
+        {"$ref": "#/$defs/Header"},
+        {
+          "type": "object",
+          "required": ["schema", "version", "resource", "current", "delta", "next", "allowed", "reason", "source"],
+          "properties": {
+            "schema": {"const": "ResourceDeltaV1"},
+            "resource": {"type": "string", "minLength": 1},
+            "current": {"type": "number", "minimum": 0},
+            "delta": {"type": "number"},
+            "next": {"type": "number", "minimum": 0},
+            "allowed": {"type": "boolean"},
+            "reason": {"type": "string"},
+            "source": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "CheckResultV1": {
+      "allOf": [
+        {"$ref": "#/$defs/Header"},
+        {
+          "type": "object",
+          "required": ["schema", "version", "requestId", "heroId", "checkKind", "status", "success", "outcome", "qualityPoints", "rolls", "targets", "effectiveValue", "modifiers", "effects", "resourceDeltas", "display", "meta"],
+          "properties": {
+            "schema": {"const": "CheckResultV1"},
+            "requestId": {"type": "string", "minLength": 1},
+            "heroId": {"type": "string", "minLength": 1},
+            "checkKind": {"enum": ["attribute", "talent", "spell", "liturgy", "attack", "parry", "ranged"]},
+            "status": {"enum": ["resolved", "cancelled", "unsupported", "error"]},
+            "success": {"type": ["boolean", "null"]},
+            "outcome": {"type": "string"},
+            "qualityPoints": {"type": ["number", "null"], "minimum": 0},
+            "rolls": {"type": "array", "items": {"type": "number"}},
+            "targets": {"type": "array", "items": {"type": "number"}},
+            "effectiveValue": {"type": ["number", "null"]},
+            "modifiers": {"type": "array", "items": {"$ref": "#/$defs/Modifier"}},
+            "effects": {"type": "array", "items": {"$ref": "#/$defs/Effect"}},
+            "resourceDeltas": {"type": "array", "items": {"$ref": "#/$defs/ResourceDeltaV1"}},
+            "display": {"type": "object"},
+            "meta": {"type": "object"}
+          }
+        }
+      ]
+    },
+    "CombatActionV1": {
+      "allOf": [
+        {"$ref": "#/$defs/Header"},
+        {
+          "type": "object",
+          "required": ["schema", "version", "actionId", "heroId", "kind", "targetRef", "weaponRef", "maneuvers", "modifier", "context", "payload"],
+          "properties": {
+            "schema": {"const": "CombatActionV1"},
+            "actionId": {"type": "string", "minLength": 1},
+            "heroId": {"type": "string", "minLength": 1},
+            "kind": {"type": "string", "minLength": 1},
+            "targetRef": {"type": ["string", "null"]},
+            "weaponRef": {"type": ["string", "null"]},
+            "maneuvers": {"type": "array"},
+            "modifier": {"type": "number"},
+            "context": {"type": "object"},
+            "payload": {"type": "object"}
+          }
+        }
+      ]
+    },
+    "CombatResultV1": {
+      "allOf": [
+        {"$ref": "#/$defs/Header"},
+        {
+          "type": "object",
+          "required": ["schema", "version", "actionId", "heroId", "status", "checkResult", "effects", "resourceDeltas", "display", "meta"],
+          "properties": {
+            "schema": {"const": "CombatResultV1"},
+            "actionId": {"type": "string", "minLength": 1},
+            "heroId": {"type": "string", "minLength": 1},
+            "status": {"enum": ["resolved", "cancelled", "unsupported", "error"]},
+            "checkResult": {"oneOf": [{"$ref": "#/$defs/CheckResultV1"}, {"type": "null"}]},
+            "effects": {"type": "array", "items": {"$ref": "#/$defs/Effect"}},
+            "resourceDeltas": {"type": "array", "items": {"$ref": "#/$defs/ResourceDeltaV1"}},
+            "display": {"type": "object"},
+            "meta": {"type": "object"}
+          }
+        }
+      ]
+    }
+  }
+}
