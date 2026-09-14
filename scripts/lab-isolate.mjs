@@ -42,7 +42,7 @@ if (!index.includes('HELDENMOBIL LAB · EXPERIMENTAL')) {
 }
 write('index.html', index);
 
-// 3) Repository metadata and regression test.
+// 3) Repository metadata and regression tests.
 let readme = read('README.md');
 const notice = '> **HeldenMobil LAB** – experimenteller Entwicklungszweig auf Basis von HeldenMobil v20.3.2. Browserdaten und Backups sind vom Produktivsystem getrennt; OneDrive ist im Lab zunächst deaktiviert.\n\n';
 if (!readme.startsWith('> **HeldenMobil LAB**')) readme = notice + readme;
@@ -52,6 +52,10 @@ const pkg = JSON.parse(read('package.json'));
 pkg.name = 'heldenmobil-lab';
 pkg.scripts.test = 'node tests/smoke.mjs && node tests/core.mjs && node tests/lab-isolation.mjs';
 write('package.json', JSON.stringify(pkg, null, 2) + '\n');
+
+let smoke = read('tests/smoke.mjs');
+smoke = smoke.replace("COMPANION_BACKUP_DB='HeldenMobilBackups'", "COMPANION_BACKUP_DB='HeldenMobilLabBackups'");
+write('tests/smoke.mjs', smoke);
 
 write('tests/lab-isolation.mjs', `import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nconst app=fs.readFileSync('js/app.js','utf8');\nconst index=fs.readFileSync('index.html','utf8');\nassert.match(app,/heldenmobil-lab:/);\nassert.doesNotMatch(app,/['\\\"\\\`]heldenmobil:/);\nassert.match(app,/HeldenMobilLabBackups/);\nassert.match(app,/const HELDENMOBIL_LAB_MODE=true;/);\nassert.match(app,/return !HELDENMOBIL_LAB_MODE/);\nassert.match(app,/lab-hero-/);\nassert.match(index,/HeldenMobil LAB/);\nassert.match(index,/HELDENMOBIL LAB · EXPERIMENTAL/);\nconsole.log('lab-isolation: OK');\n`);
 
