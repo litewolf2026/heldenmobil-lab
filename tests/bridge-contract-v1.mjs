@@ -1,4 +1,5 @@
 import {createRequire} from 'node:module';
+import fs from 'node:fs';
 const require=createRequire(import.meta.url);
 const bridge=require('../js/bridge-contract-v1.js');
 const effects=require('../js/dsa41/effect-core.js');
@@ -6,6 +7,11 @@ const effects=require('../js/dsa41/effect-core.js');
 function eq(actual,expected,label){const a=JSON.stringify(actual),e=JSON.stringify(expected);if(a!==e)throw new Error(`${label}: expected ${e}, got ${a}`);}
 function ok(value,label){if(!value)throw new Error(label);}
 function throws(fn,label){let did=false;try{fn();}catch(_){did=true;}if(!did)throw new Error(`${label}: expected exception`);}
+
+const schema=JSON.parse(fs.readFileSync(new URL('../contracts/bridge-v1.schema.json',import.meta.url),'utf8'));
+const fixture=JSON.parse(fs.readFileSync(new URL('../contracts/fixtures/bridge-v1-sample.json',import.meta.url),'utf8'));
+eq(schema.$defs.HeroSnapshotV1.allOf[1].properties.schema.const,'HeroSnapshotV1','language-neutral JSON schema parses');
+for(const [name,value] of Object.entries(fixture))eq(bridge.validateContractV1(value),value,`canonical fixture ${name} validates`);
 
 const hero=bridge.heroSnapshotV1({
   heroId:'hero:test:1',name:'Testheld',
