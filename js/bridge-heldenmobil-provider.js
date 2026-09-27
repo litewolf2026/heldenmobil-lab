@@ -4,12 +4,13 @@
   const magic=typeof module==='object'&&module.exports?require('./dsa41/magic-core.js'):root.HeldenMobilDsa41Magic;
   const talents=typeof module==='object'&&module.exports?require('./dsa41/talent-core.js'):root.HeldenMobilDsa41Talent;
   const proficiencies=typeof module==='object'&&module.exports?require('./dsa41/proficiency-core.js'):root.HeldenMobilDsa41Proficiency;
-  const api=factory(contract,checks,magic,talents,proficiencies);
+  const combatTalents=typeof module==='object'&&module.exports?require('./dsa41/combat-talent-registry.js'):root.HeldenMobilDsa41CombatTalents;
+  const api=factory(contract,checks,magic,talents,proficiencies,combatTalents);
   if(typeof module==='object'&&module.exports)module.exports=api;
   else root.HeldenMobilBridgeProviderV1=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(contract,checks,magic,talents,proficiencies){
+})(typeof globalThis!=='undefined'?globalThis:this,function(contract,checks,magic,talents,proficiencies,combatTalents){
   'use strict';
-  if(!contract||!checks||!magic||!talents||!proficiencies)throw new Error('bridge contract, check core, magic core, talent core and proficiency core are required');
+  if(!contract||!checks||!magic||!talents||!proficiencies||!combatTalents)throw new Error('bridge contract, check core, magic core, talent core, proficiency core and combat talent registry are required');
 
   const TALENT_RULE_PROFILE='dsa41-v1';
   const TALENT_CONTEXT_CAPABILITY='check:talent-context:v1';
@@ -37,6 +38,10 @@
   }
   function defaultEnergyState(hero){return {};}
   function defaultCombatState(hero){return {combatTalents:(hero?.combat||[]).map(row=>({name:row.name,at:row.at,pa:row.pa}))};}
+  function canonicalCombatState(hero,state){
+    const source=plain(state)?state:{},rows=Array.isArray(source.combatTalents)?source.combatTalents:(hero?.combat||[]);
+    return {...source,combatTalents:rows.map(row=>{const meta=combatTalents.canonicalSnapshotMeta(row?.key??row?.name);return meta?{...row,...meta}:{...row};})};
+  }
   function findHero(getHeroes,id){return array(getHeroes(),'heroes').find(hero=>String(hero?.key??hero?.heroId)===String(id))||null;}
   function findAbility(hero,kind,key){
     const wanted=String(key||'').trim().toLocaleLowerCase('de');
@@ -89,7 +94,7 @@
         heroId:heroId(hero),name:text(hero.name,'hero name'),attributes,energies,
         talents:[...ordinaryTalents,...normalizedProficiencySnapshot(hero)],
         spells:(hero.spells||[]).filter(z=>abilityProbe(z).length===3).map(normalizedSpell),
-        combat:getCombatState(hero)||{},capabilities:normalizedCapabilities(hero),
+        combat:canonicalCombatState(hero,getCombatState(hero)||{}),capabilities:normalizedCapabilities(hero),
         display:{race:hero.race||'',culture:hero.culture||'',profession:hero.profession||''},
         source:{product:'heldenmobil-lab',hldKey:heroId(hero)}
       });
@@ -178,6 +183,13 @@
         if(!FULL_TO_SHORT[full]&&!SHORT_TO_FULL[short])return unsupported(request,'attribute-not-found');
         const roll=d20(),base=propertyValue(hero,full),result=checks.checkAttribute({value:base,modifier:request.modifier,roll});
         return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:kind,status:'resolved',success:result.success,outcome:result.success?'success':'failure',qualityPoints:null,rolls:[roll],targets:[result.target],effectiveValue:result.target,modifiers:request.modifiers,display:{summary:resultDisplay(kind,result)},meta:{baseValue:base}});
+      }
+      if(kind==='talent'&&combatTalents.isCombatKey(request.check.key)){
+        const definition=combatTalents.getCombatTalentDefinition(request.check.key);
+        return unsupported(request,definition?'combat-resolution-required':'combat-definition-unavailable',{
+          resolutionMode:combatTalents.RESOLUTION_MODE.COMBAT,
+          ...(definition?{combatKey:definition.key,combatClass:definition.combatClass}:{})
+        });
       }
       if(kind==='talent'){
         const requestedProfile=requestedTalentRuleProfile(request);
