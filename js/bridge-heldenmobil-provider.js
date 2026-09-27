@@ -2,19 +2,23 @@
   const contract=typeof module==='object'&&module.exports?require('./bridge-contract-v1.js'):root.HeldenMobilBridgeContractV1;
   const checks=typeof module==='object'&&module.exports?require('./dsa41/check-core.js'):root.HeldenMobilDsa41Check;
   const magic=typeof module==='object'&&module.exports?require('./dsa41/magic-core.js'):root.HeldenMobilDsa41Magic;
-  const api=factory(contract,checks,magic);
+  const talents=typeof module==='object'&&module.exports?require('./dsa41/talent-core.js'):root.HeldenMobilDsa41Talent;
+  const api=factory(contract,checks,magic,talents);
   if(typeof module==='object'&&module.exports)module.exports=api;
   else root.HeldenMobilBridgeProviderV1=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(contract,checks,magic){
+})(typeof globalThis!=='undefined'?globalThis:this,function(contract,checks,magic,talents){
   'use strict';
-  if(!contract||!checks||!magic)throw new Error('bridge contract, check core and magic core are required');
+  if(!contract||!checks||!magic||!talents)throw new Error('bridge contract, check core, magic core and talent core are required');
 
+  const TALENT_RULE_PROFILE='dsa41-v1';
+  const TALENT_CONTEXT_CAPABILITY='check:talent-context:v1';
   const SHORT_TO_FULL=Object.freeze({MU:'Mut',KL:'Klugheit',IN:'Intuition',CH:'Charisma',FF:'Fingerfertigkeit',GE:'Gewandtheit',KO:'Konstitution',KK:'Körperkraft'});
   const FULL_TO_SHORT=Object.freeze(Object.fromEntries(Object.entries(SHORT_TO_FULL).map(([short,full])=>[full,short])));
 
   function text(value,label){const out=String(value??'').trim();if(!out)throw new TypeError(`${label} must be a non-empty string`);return out;}
   function finite(value,label){const out=Number(value);if(!Number.isFinite(out))throw new TypeError(`${label} must be finite`);return out;}
   function array(value,label){if(!Array.isArray(value))throw new TypeError(`${label} must be an array`);return value;}
+  function plain(value){return !!value&&typeof value==='object'&&!Array.isArray(value);}
   function heroId(hero){return text(hero?.key??hero?.heroId,'hero key');}
   function propMap(hero){return new Map(array(hero?.props||[],'hero.props').map(item=>[String(item?.name||''),item]));}
   function propertyValue(hero,fullName){const prop=propMap(hero).get(fullName);return prop?finite(prop.value??0,fullName)+finite(prop.mod??0,`${fullName}.mod`):0;}
@@ -43,6 +47,17 @@
     const unit=kind==='spell'?'ZfP*':kind==='liturgy'?'LkP*':'TaP*';
     return result.success?`Gelungen · ${result.points??0} ${unit}`:`Misslungen${result.outcome&&result.outcome!=='failure'?` · ${result.outcome}`:''}`;
   }
+  function talentContext(request){return plain(request?.context?.talent)?request.context.talent:null;}
+  function usesTalentRuleProfile(request){return request?.check?.kind==='talent'&&talentContext(request)?.ruleProfile===TALENT_RULE_PROFILE;}
+  function encumbranceRuleFor(ability,definition){return String(ability?.be??'').trim()||(definition?.encumbranceRule??null);}
+  function requiresEncumbrance(rule){
+    const value=String(rule??'').trim().toUpperCase().replace(/\s+/g,'');
+    return !!value&&value!=='-'&&value!=='0'&&value!=='KEINE';
+  }
+  function heroAttributeRecord(hero){const out={};for(const short of Object.keys(SHORT_TO_FULL))out[short]=shortValue(hero,short);return out;}
+  function substitutionMeta(name,hero){
+    return talents.substitutionOptions({name,heroTalents:hero?.talents||[]}).map(option=>({talent:option.talent.name,penalty:option.penalty}));
+  }
 
   function createProvider({getHeroes,getEnergyState=defaultEnergyState,getCombatState=defaultCombatState,rollDie}={}){
     if(typeof getHeroes!=='function')throw new TypeError('getHeroes callback is required');
@@ -70,7 +85,50 @@
         source:{product:'heldenmobil-lab',hldKey:heroId(hero)}
       });
     }
-    function unsupported(request,outcome){return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:request.check.kind,status:'unsupported',success:null,outcome,modifiers:request.modifiers});}
+    function unsupported(request,outcome,meta={}){
+      return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:request.check.kind,status:'unsupported',success:null,outcome,modifiers:request.modifiers,meta});
+    }
+    function executeDsa41TalentCheck(request,hero){
+      const definition=talents.getTalentDefinition(request.check.key);
+      if(!definition)return unsupported(request,'talent-definition-unavailable',{ruleProfile:TALENT_RULE_PROFILE,substitutions:[]});
+      const substitutions=substitutionMeta(request.check.key,hero);
+      const availability=talents.talentAvailability({name:request.check.key,heroTalents:hero.talents||[]});
+      if(availability.status===talents.AVAILABILITY.UNACTIVATED_SPECIAL)return unsupported(request,'special-talent-unactivated',{ruleProfile:TALENT_RULE_PROFILE,substitutions});
+      if(availability.status===talents.AVAILABILITY.SPECIAL_VALUE_NEGATIVE)return unsupported(request,'special-talent-negative',{ruleProfile:TALENT_RULE_PROFILE,substitutions});
+      if(availability.status===talents.AVAILABILITY.BASIC_VALUE_MISSING)return unsupported(request,'basic-talent-value-unavailable',{ruleProfile:TALENT_RULE_PROFILE,substitutions});
+      if(availability.status!==talents.AVAILABILITY.AVAILABLE||!availability.talent)return unsupported(request,'talent-unavailable',{ruleProfile:TALENT_RULE_PROFILE,substitutions});
+
+      const context=talentContext(request)||{},ability=availability.talent,rule=encumbranceRuleFor(ability,definition),combat=getCombatState(hero)||{};
+      let be=0;
+      if(requiresEncumbrance(rule)){
+        if(!Number.isFinite(Number(combat.be)))return unsupported(request,'encumbrance-state-unavailable',{ruleProfile:TALENT_RULE_PROFILE,encumbranceRule:rule,substitutions});
+        be=Number(combat.be);
+      }
+      const rolls=[d20(),d20(),d20()];
+      let resolved;
+      try{
+        resolved=talents.resolveTalentCheck({
+          talent:ability,heroAttributes:heroAttributeRecord(hero),modifier:request.modifier,be,
+          attributeOverride:context.attributeOverride??null,specialization:context.specialization??null,rolls
+        });
+      }catch(error){
+        return unsupported(request,'talent-context-invalid',{ruleProfile:TALENT_RULE_PROFILE,message:error?.message||String(error),substitutions});
+      }
+      const modifiers=[...request.modifiers];
+      if(resolved.encumbrancePenalty!==0)modifiers.push({source:'heldenmobil',value:resolved.encumbrancePenalty,reason:`eBE ${resolved.encumbranceRule}`,kind:'encumbrance'});
+      const result=resolved.result;
+      return contract.checkResultV1({
+        requestId:request.requestId,heroId:request.heroId,checkKind:'talent',status:'resolved',success:result.success,outcome:result.outcome,
+        qualityPoints:result.points,rolls:result.rolls,targets:result.targets,effectiveValue:result.effectiveSkill,modifiers,effects:[],resourceDeltas:[],
+        display:{summary:resultDisplay('talent',result)},
+        meta:{
+          ruleProfile:TALENT_RULE_PROFILE,baseTaW:resolved.baseSkill,usedAttributes:resolved.attributeKeys,
+          specialization:context.specialization??null,specializationBonus:resolved.specializationBonus,
+          encumbranceRule:resolved.encumbranceRule,encumbrancePenalty:resolved.encumbrancePenalty,
+          externalModifier:resolved.externalModifier,totalModifier:resolved.totalModifier,substitutions
+        }
+      });
+    }
     function executeCheck(rawRequest){
       const request=contract.validateCheckRequestV1(rawRequest),hero=findHero(getHeroes,request.heroId);if(!hero)return unsupported(request,'hero-not-found');
       const kind=request.check.kind;
@@ -80,6 +138,7 @@
         const roll=d20(),base=propertyValue(hero,full),result=checks.checkAttribute({value:base,modifier:request.modifier,roll});
         return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:kind,status:'resolved',success:result.success,outcome:result.success?'success':'failure',qualityPoints:null,rolls:[roll],targets:[result.target],effectiveValue:result.target,modifiers:request.modifiers,display:{summary:resultDisplay(kind,result)},meta:{baseValue:base}});
       }
+      if(usesTalentRuleProfile(request))return executeDsa41TalentCheck(request,hero);
       if(kind==='talent'||kind==='spell'||kind==='liturgy'){
         const ability=findAbility(hero,kind,request.check.key);if(!ability)return unsupported(request,'ability-not-found');
         const attrs=abilityProbe(ability);if(attrs.length!==3)return unsupported(request,'probe-not-modelled');
@@ -95,8 +154,8 @@
       return unsupported(request,'check-kind-not-yet-bound');
     }
 
-    return {listHeroes,getHeroSnapshot,executeCheck};
+    return {bridgeCapabilities:[TALENT_CONTEXT_CAPABILITY],listHeroes,getHeroSnapshot,executeCheck};
   }
 
-  return {SHORT_TO_FULL,FULL_TO_SHORT,probeShortNames,createProvider};
+  return {TALENT_RULE_PROFILE,TALENT_CONTEXT_CAPABILITY,SHORT_TO_FULL,FULL_TO_SHORT,probeShortNames,createProvider};
 });
