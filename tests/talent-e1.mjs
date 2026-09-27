@@ -229,9 +229,11 @@ for(const mode of ['PROFICIENCY','COMBAT','EXTENDED']){
 }
 for(const name of ['Sprachen Kennen Garethi','Sprachen Kennen [Muttersprache]','Lesen/Schreiben Kusliker Zeichen','Schwerter','Bogen','Ringen','Prophezeien','Unbekannt']){
   assert.equal(talent.getTalentDefinition(name),null,'out of E1 catalog');
+}
+for(const name of ['Schwerter','Bogen','Ringen','Prophezeien','Unbekannt']){
   hero.talents=[{name,probe:'KL/IN/CH',value:12}];
   const before=diceUsed;
-  assert.equal(provider.executeCheck(request(name)).outcome,'talent-definition-unavailable','no legacy fallback for unmodelled profile talent');
+  assert.equal(provider.executeCheck(request(name)).outcome,'talent-definition-unavailable','no legacy fallback for unmodelled ordinary/combat/gift profile talent');
   assert.equal(diceUsed,before);
 }
 hero.talents=[{name:'Kochen',value:5}];
