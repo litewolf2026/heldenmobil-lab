@@ -8,7 +8,7 @@
   if(!checks)throw new Error('check core is required');
 
   const TALENT_TYPE=Object.freeze({BASIC:'basic',SPECIAL:'special'});
-  const AVAILABILITY=Object.freeze({AVAILABLE:'available',UNACTIVATED_SPECIAL:'unactivated-special',BASIC_VALUE_MISSING:'basic-value-missing',UNKNOWN_TALENT:'unknown-talent'});
+  const AVAILABILITY=Object.freeze({AVAILABLE:'available',UNACTIVATED_SPECIAL:'unactivated-special',SPECIAL_VALUE_NEGATIVE:'special-value-negative',BASIC_VALUE_MISSING:'basic-value-missing',UNKNOWN_TALENT:'unknown-talent'});
   const ATTRIBUTES=new Set(['MU','KL','IN','CH','FF','GE','KO','KK']);
 
   const n=(value,label)=>{const out=Number(value);if(!Number.isFinite(out))throw new TypeError(`${label} must be finite`);return out;};
@@ -48,9 +48,15 @@
     const wanted=norm(name);
     return list(catalog).find(def=>norm(def.name)===wanted||list(def.aliases).some(alias=>norm(alias)===wanted))||null;
   }
-  function findHeroTalent(heroTalents,name){const wanted=norm(name);return list(heroTalents).find(t=>norm(t?.name)===wanted)||null;}
+  function sameTalentName(left,right,catalog=CORE_TALENTS){
+    if(norm(left)===norm(right))return true;
+    const leftDef=getTalentDefinition(left,catalog),rightDef=getTalentDefinition(right,catalog);
+    return !!(leftDef&&rightDef&&norm(leftDef.name)===norm(rightDef.name));
+  }
+  function findHeroTalent(heroTalents,name,catalog=CORE_TALENTS){return list(heroTalents).find(t=>sameTalentName(t?.name,name,catalog))||null;}
   function talentAvailability({name,heroTalents=[],catalog=CORE_TALENTS}={}){
-    const definition=getTalentDefinition(name,catalog),talent=findHeroTalent(heroTalents,name);
+    const definition=getTalentDefinition(name,catalog),talent=findHeroTalent(heroTalents,name,catalog);
+    if(talent&&definition?.type===TALENT_TYPE.SPECIAL&&n(talent.value??0,'talent value')<0)return {status:AVAILABILITY.SPECIAL_VALUE_NEGATIVE,definition,talent};
     if(talent)return {status:AVAILABILITY.AVAILABLE,definition,talent};
     if(!definition)return {status:AVAILABILITY.UNKNOWN_TALENT,definition:null,talent:null};
     if(definition.type===TALENT_TYPE.SPECIAL)return {status:AVAILABILITY.UNACTIVATED_SPECIAL,definition,talent:null};
@@ -58,7 +64,7 @@
   }
   function substitutionOptions({name,heroTalents=[],catalog=CORE_TALENTS}={}){
     const definition=getTalentDefinition(name,catalog);if(!definition)return[];
-    return definition.substitutes.map(sub=>({definition:sub,talent:findHeroTalent(heroTalents,sub.talent)})).filter(x=>x.talent).map(x=>({kind:'substitute',requestedTalent:definition.name,talent:x.talent,penalty:x.definition.penalty}));
+    return definition.substitutes.map(sub=>({definition:sub,talent:findHeroTalent(heroTalents,sub.talent,catalog)})).filter(x=>x.talent).map(x=>({kind:'substitute',requestedTalent:definition.name,talent:x.talent,penalty:x.definition.penalty}));
   }
   function encumbrancePenalty(rule,be=0){
     const base=Math.max(0,n(be,'BE')),text=String(rule??'').trim().toUpperCase().replace(/\s+/g,'').replace(/\u00d7/g,'X');
@@ -87,11 +93,13 @@
   function resolveTalentCheck({talent,heroAttributes,modifier=0,be=0,attributeOverride=null,specialization=null,rolls,catalog=CORE_TALENTS}={}){
     if(!talent||typeof talent!=='object')throw new TypeError('activated talent record is required');
     const definition=getTalentDefinition(talent.name,catalog),attributeKeys=resolveAttributeKeys({talent,definition,override:attributeOverride});
-    const baseSkill=n(talent.value??0,'talent value'),specBonus=specializationBonus(talent,specialization),skill=baseSkill+specBonus;
+    const baseSkill=n(talent.value??0,'talent value');
+    if(definition?.type===TALENT_TYPE.SPECIAL&&baseSkill<0)throw new RangeError(`special talent cannot be checked with negative TaW: ${definition.name}`);
+    const specBonus=specializationBonus(talent,specialization),skill=baseSkill+specBonus;
     const rule=String(talent.be??'').trim()||(definition?.encumbranceRule??null),ebe=encumbrancePenalty(rule,be),externalModifier=n(modifier,'modifier'),totalModifier=externalModifier+ebe;
     const result=checks.checkTalent({values:attributeValues(heroAttributes,attributeKeys),skill,modifier:totalModifier,rolls});
     return {definition,attributeKeys,baseSkill,specializationBonus:specBonus,skill,encumbranceRule:rule,encumbrancePenalty:ebe,externalModifier,totalModifier,result};
   }
 
-  return {TALENT_TYPE,AVAILABILITY,CORE_TALENTS,getTalentDefinition,findHeroTalent,talentAvailability,substitutionOptions,probeAttributeKeys,resolveAttributeKeys,encumbrancePenalty,specializationBonus,resolveTalentCheck};
+  return {TALENT_TYPE,AVAILABILITY,CORE_TALENTS,getTalentDefinition,sameTalentName,findHeroTalent,talentAvailability,substitutionOptions,probeAttributeKeys,resolveAttributeKeys,encumbrancePenalty,specializationBonus,resolveTalentCheck};
 });
