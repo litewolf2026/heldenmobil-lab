@@ -67,9 +67,10 @@ use `encumbranceNote`. Neither is automatically applied. For example:
   stays zero (p. 21; the overview also lists no fixed eBE).
 - Fesseln/Entfesseln distinguishes tying from escaping; Fischen/Angeln depends
   on the particular fishing activity (p. 26).
-- Überreden is situation-dependent; E1 applies no automatic catalog eBE.
-  Situational difficulty or relief is supplied through the normal external
-  check modifier.
+- Überreden is an explicit HeldenMobil project-rule deviation from WdS:
+  neither the situational BE-4 nor the BE*2 case for begging in visible armor
+  is modeled or applied. Its Golden expectation is therefore
+  `encumbranceRule: null` and `encumbranceVariants: []`.
 - Schauspielerei, Sich Verkleiden, Wildnisleben and handwork require situational
   assessment. WdS pp. 32–33 provide no universal formula for handwork.
 
@@ -118,15 +119,16 @@ compressed overview is incomplete:
 
 ## Verification
 
-`node tests/talent-e1.mjs` verifies the complete independent WdS name/group
-inventory, all basic/special classifications, unique aliases, valid triples,
-parseable fixed and conditional eBE formulas, canonical in-scope substitutions,
-metadata immutability, all 105 direct resolutions, all 25 negative basic talents,
-all 80 missing/negative special talents, representative full provider checks,
-HLD/override precedence, advancement independence, metadata-only substitutions,
-reserved-mode rejection, no EXTENDED execution and browser loading.
+`node tests/talent-e1.mjs` keeps the behavioral/provider regression coverage.
+`node tests/talent-e1-golden.mjs` adds a separate static Golden matrix sourced
+from WdS rather than from the production catalog. It compares all 105 entries
+for canonical name, aliases, group, basic/special type, default attribute triple,
+eBE metadata, substitutes with penalties/specializations/conditions, stable
+`talent.*` key and `resolutionMode: 'TALENT'`. The Golden test also mutates one
+representative field of every protected metadata class and proves that the
+comparison rejects each mutation.
 
-The suite is part of `npm test`, the complete HeldenMobil Lab CI command.
+Both suites are part of `npm test`, the complete HeldenMobil Lab CI command.
 Shared Maze, deployment, languages/scripts, combat resolution and E2/E3/E4
 are unchanged by this work.
 
