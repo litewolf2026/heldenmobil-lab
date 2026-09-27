@@ -34,7 +34,7 @@
   // catalogue semantics. The full WdS catalogue remains TALENT-E scope.
   const CORE_TALENTS=Object.freeze([
     freezeDefinition({name:'Sinnensch\u00e4rfe',aliases:['Sinnessch\u00e4rfe'],type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','IN']}),
-    frezeDefinition({name:'Klettern',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','GE'l'KK']},encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:5},{talent:'K\u00f6rperbeherrschung',penalty:10}]}),
+    freezeDefinition({name:'Klettern',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','GE','KK'],encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:5},{talent:'K\u00f6rperbeherrschung',penalty:10}]}),
     freezeDefinition({name:'K\u00f6rperbeherrschung',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','IN','GE'],encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:10}]}),
     freezeDefinition({name:'Schleichen',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','IN','GE'],encumbranceRule:'BE'}),
     freezeDefinition({name:'F\u00e4hrtensuchen',type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','KO']}),
