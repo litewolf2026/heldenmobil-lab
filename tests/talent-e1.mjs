@@ -195,7 +195,7 @@ hero.talents[0].be='-';
 assert.equal(armorProvider.executeCheck(request('Schwimmen')).meta.encumbrancePenalty,0,'explicit HLD eBE remains authoritative');
 hero.talents=[{name:'Überreden',value:8,specs:['Betteln']}];
 result=armorProvider.executeCheck(request('Überreden',{modifier:3,context:{talent:{specialization:'Betteln'}}}));
-assert.deepEqual([result.meta.encumbrancePenalty,result.meta.externalModifier,result.meta.totalModifier,result.effectiveValue],[0,3,3,5],'Überreden has no automatic eBE; situational difficulty uses the request modifier');
+assert.deepEqual([result.meta.encumbrancePenalty,result.meta.externalModifier,result.meta.totalModifier,result.meta.specializationBonus,result.effectiveValue],[0,3,3,2,7],'Überreden has no automatic eBE; request modifier composes without changing specialization');
 
 // Reporting substitutes does not authorize, activate or select any of them.
 hero.talents=[{name:'Gaukeleien',value:12,specs:[]}];
