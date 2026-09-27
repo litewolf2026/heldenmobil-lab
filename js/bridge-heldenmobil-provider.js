@@ -3,12 +3,13 @@
   const checks=typeof module==='object'&&module.exports?require('./dsa41/check-core.js'):root.HeldenMobilDsa41Check;
   const magic=typeof module==='object'&&module.exports?require('./dsa41/magic-core.js'):root.HeldenMobilDsa41Magic;
   const talents=typeof module==='object'&&module.exports?require('./dsa41/talent-core.js'):root.HeldenMobilDsa41Talent;
-  const api=factory(contract,checks,magic,talents);
+  const proficiencies=typeof module==='object'&&module.exports?require('./dsa41/proficiency-core.js'):root.HeldenMobilDsa41Proficiency;
+  const api=factory(contract,checks,magic,talents,proficiencies);
   if(typeof module==='object'&&module.exports)module.exports=api;
   else root.HeldenMobilBridgeProviderV1=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(contract,checks,magic,talents){
+})(typeof globalThis!=='undefined'?globalThis:this,function(contract,checks,magic,talents,proficiencies){
   'use strict';
-  if(!contract||!checks||!magic||!talents)throw new Error('bridge contract, check core, magic core and talent core are required');
+  if(!contract||!checks||!magic||!talents||!proficiencies)throw new Error('bridge contract, check core, magic core, talent core and proficiency core are required');
 
   const TALENT_RULE_PROFILE='dsa41-v1';
   const TALENT_CONTEXT_CAPABILITY='check:talent-context:v1';
@@ -27,6 +28,7 @@
   function abilityProbe(ability){const attrs=probeShortNames(ability?.probe);return attrs.length===3?attrs:[];}
   function normalizedTalent(talent){return {key:text(talent.name,'talent name'),name:text(talent.name,'talent name'),value:finite(talent.value??0,'talent value'),attributes:abilityProbe(talent)};}
   function normalizedSpell(spell){return {key:text(spell.name,'spell name'),name:text(spell.name,'spell name'),value:finite(spell.value??0,'spell value'),attributes:abilityProbe(spell),representation:String(spell.rep??''),complexity:spell.column??null};}
+  function normalizedProficiencySnapshot(hero){return proficiencies.snapshotAbilities(hero?.talents||[]);}
   function normalizedCapabilities(hero){
     const out=['check:attribute','check:talent'];
     if((hero?.spells||[]).length)out.push('check:spell');
@@ -48,6 +50,7 @@
     return result.success?`Gelungen · ${result.points??0} ${unit}`:`Misslungen${result.outcome&&result.outcome!=='failure'?` · ${result.outcome}`:''}`;
   }
   function talentContext(request){return plain(request?.context?.talent)?request.context.talent:null;}
+  function proficiencyContext(request){return plain(request?.context?.proficiency)?request.context.proficiency:null;}
   function requestedTalentRuleProfile(request){const value=talentContext(request)?.ruleProfile;return value==null?'':String(value).trim();}
   function usesTalentRuleProfile(request){return request?.check?.kind==='talent'&&requestedTalentRuleProfile(request)===TALENT_RULE_PROFILE;}
   function encumbranceRuleFor(ability,definition){return String(ability?.be??'').trim()||(definition?.encumbranceRule??null);}
@@ -81,9 +84,10 @@
         if(!value||typeof value!=='object')continue;
         const max=finite(value.max,`${key}.max`),current=finite(value.current??max,`${key}.current`);energies[key]={current,max};
       }
+      const hldTalents=hero.talents||[],ordinaryTalents=hldTalents.filter(t=>!proficiencies.isHldProficiencyName(t?.name)&&abilityProbe(t).length===3).map(normalizedTalent);
       return contract.heroSnapshotV1({
         heroId:heroId(hero),name:text(hero.name,'hero name'),attributes,energies,
-        talents:(hero.talents||[]).filter(t=>abilityProbe(t).length===3).map(normalizedTalent),
+        talents:[...ordinaryTalents,...normalizedProficiencySnapshot(hero)],
         spells:(hero.spells||[]).filter(z=>abilityProbe(z).length===3).map(normalizedSpell),
         combat:getCombatState(hero)||{},capabilities:normalizedCapabilities(hero),
         display:{race:hero.race||'',culture:hero.culture||'',profession:hero.profession||''},
@@ -93,10 +97,34 @@
     function unsupported(request,outcome,meta={}){
       return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:request.check.kind,status:'unsupported',success:null,outcome,modifiers:request.modifiers,meta});
     }
+    function executeDsa41ProficiencyCheck(request,hero,definition){
+      const context=proficiencyContext(request)||{},operation=String(context.operation??'').trim();
+      if(!operation)return unsupported(request,'proficiency-operation-required',{ruleProfile:TALENT_RULE_PROFILE,resolutionMode:definition.resolutionMode,proficiencyKey:definition.key});
+      const ability=proficiencies.findHeroProficiency({definition,heroTalents:hero.talents||[]});
+      if(!ability)return unsupported(request,'proficiency-unavailable',{ruleProfile:TALENT_RULE_PROFILE,resolutionMode:definition.resolutionMode,proficiencyKey:definition.key,operation:operation.toUpperCase()});
+      let resolved;
+      try{resolved=proficiencies.resolveProficiency({definition,value:ability.value,operation,modifier:request.modifier});}
+      catch(error){return unsupported(request,error?.code||'proficiency-context-invalid',{ruleProfile:TALENT_RULE_PROFILE,resolutionMode:definition.resolutionMode,proficiencyKey:definition.key,message:error?.message||String(error)});}
+      return contract.checkResultV1({
+        requestId:request.requestId,heroId:request.heroId,checkKind:'talent',status:'resolved',success:resolved.success,outcome:resolved.outcome,
+        qualityPoints:null,rolls:[],targets:[],effectiveValue:resolved.effectiveValue,modifiers:request.modifiers,effects:[],resourceDeltas:[],
+        display:{summary:`${resolved.success?'Kompetenz ausreichend':'Kompetenz nicht ausreichend'} · TaW ${resolved.effectiveValue} / benötigt ${resolved.requiredValue}`},
+        meta:{
+          ruleProfile:TALENT_RULE_PROFILE,resolutionMode:definition.resolutionMode,proficiencyKey:definition.key,proficiencyKind:definition.kind,
+          operation:resolved.operation,complexity:definition.complexity,baseRequiredValue:resolved.baseRequiredValue,requiredValue:resolved.requiredValue,
+          externalModifier:resolved.externalModifier,hldName:ability.name
+        }
+      });
+    }
     function executeDsa41TalentCheck(request,hero){
       if(String(request.check.mode).trim().toUpperCase()==='EXTENDED')return unsupported(request,'talent-check-mode-unsupported',{ruleProfile:TALENT_RULE_PROFILE});
+      const proficiencyDefinition=proficiencies.getProficiencyDefinition(request.check.key);
+      if(proficiencyDefinition&&proficiencyDefinition.resolutionMode===proficiencies.RESOLUTION_MODE.PROFICIENCY)return executeDsa41ProficiencyCheck(request,hero,proficiencyDefinition);
       const definition=talents.getTalentDefinition(request.check.key);
-      if(!definition)return unsupported(request,'talent-definition-unavailable',{ruleProfile:TALENT_RULE_PROFILE,substitutions:[]});
+      if(!definition){
+        if(proficiencies.isProficiencyKey(request.check.key)||proficiencies.isHldProficiencyName(request.check.key))return unsupported(request,'proficiency-definition-unavailable',{ruleProfile:TALENT_RULE_PROFILE,resolutionMode:proficiencies.RESOLUTION_MODE.PROFICIENCY});
+        return unsupported(request,'talent-definition-unavailable',{ruleProfile:TALENT_RULE_PROFILE,substitutions:[]});
+      }
       if(definition.resolutionMode!==talents.RESOLUTION_MODE.TALENT)return unsupported(request,'talent-resolution-mode-unsupported',{ruleProfile:TALENT_RULE_PROFILE,resolutionMode:definition.resolutionMode});
       const substitutions=substitutionMeta(request.check.key,hero);
       const availability=talents.talentAvailability({name:request.check.key,heroTalents:hero.talents||[]});
