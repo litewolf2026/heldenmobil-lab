@@ -27,7 +27,10 @@
   function shortValue(hero,shortName){const full=SHORT_TO_FULL[shortName]||shortName;return propertyValue(hero,full);}
   function probeShortNames(probe=''){return (String(probe).toUpperCase().match(/MU|KL|IN|CH|FF|GE|KO|KK/g)||[]).slice(0,3);}
   function abilityProbe(ability){const attrs=probeShortNames(ability?.probe);return attrs.length===3?attrs:[];}
-  function normalizedTalent(talent){return {key:text(talent.name,'talent name'),name:text(talent.name,'talent name'),value:finite(talent.value??0,'talent value'),attributes:abilityProbe(talent)};}
+  function normalizedTalent(talent){
+    const rawName=text(talent.name,'talent name'),definition=talents.getTalentDefinition(rawName);
+    return {key:definition?.key||rawName,name:definition?.name||rawName,value:finite(talent.value??0,'talent value'),attributes:abilityProbe(talent)};
+  }
   function normalizedSpell(spell){return {key:text(spell.name,'spell name'),name:text(spell.name,'spell name'),value:finite(spell.value??0,'spell value'),attributes:abilityProbe(spell),representation:String(spell.rep??''),complexity:spell.column??null};}
   function normalizedProficiencySnapshot(hero){return proficiencies.snapshotAbilities(hero?.talents||[]);}
   function normalizedCapabilities(hero){
