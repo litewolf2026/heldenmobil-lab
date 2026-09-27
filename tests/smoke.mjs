@@ -10,7 +10,7 @@ const vendor = fs.readFileSync('vendor/jszip-3.10.1.min.js', 'utf8');
 
 function ok(condition, message) { if (!condition) throw new Error(message); }
 
-const order = ['vendor/jszip-3.10.1.min.js','js/hld-parser.js','js/companion-core.js','js/combat-core.js','js/dsa41/check-core.js','js/dsa41/talent-core.js','js/dsa41/proficiency-core.js','js/dsa41/magic-core.js','js/bridge-contract-v1.js','js/bridge-browser-adapter.js','js/bridge-heldenmobil-provider.js','js/app.js'].map(x=>index.indexOf(`<script src="${x}"></script>`));
+const order = ['vendor/jszip-3.10.1.min.js','js/hld-parser.js','js/companion-core.js','js/combat-core.js','js/dsa41/combat-talent-registry.js','js/dsa41/check-core.js','js/dsa41/talent-core.js','js/dsa41/proficiency-core.js','js/dsa41/magic-core.js','js/bridge-contract-v1.js','js/bridge-browser-adapter.js','js/bridge-heldenmobil-provider.js','js/app.js'].map(x=>index.indexOf(`<script src="${x}"></script>`));
 ok(order.every(x=>x>=0) && order.every((x,i)=>i===0||x>order[i-1]), 'core scripts must load before app.js');
 ok(!index.includes('JSZip v3.10.1 - A JavaScript class'), 'JSZip must stay external');
 ok(index.includes('Beta v20.3.2'), 'visible version badge must be v20.3.2');
@@ -19,7 +19,7 @@ ok(index.includes('HeldenMobil Beta v20.3.2'), 'footer version must be v20.3.2')
 ok(hld.includes('function parseHero'), 'HLD parser must live in hld-parser.js');
 ok(!app.includes('function parseHero(hero)'), 'HLD parser must no longer live in app.js');
 ok(app.includes('HeldenMobilCompanion.normalizeCompanionData'), 'companion core delegate missing');
-ok(app.includes('HeldenMobilCombat.combatEbe'), 'combat core delegate missing');
+ok(app.includes('HeldenMobilDsa41CombatTalents.encumbrancePenalty'), 'canonical combat eBE registry delegate missing');
 ok(app.includes("function automaticEvent(e){return e?.type==='energy';}"), 'wound/status events must remain manually managed');
 ok(app.includes("lastQualityAudit={version:'20.3.2'"), 'quality audit JSON version must be v20.3.2');
 ok(app.includes("cloudState.conflictHeroKey===key&&!force"), 'unresolved OneDrive conflict must block automatic save');

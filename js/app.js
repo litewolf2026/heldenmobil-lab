@@ -118,23 +118,18 @@
     'Tellerhelm': {zones:Z(2,0,0,0,0,0,0,0),stars:0,partial:true}
   };
   const ARMOR_ZONE_WEIGHTS={kopf:2,brust:4,ruecken:4,bauch:4,linkerarm:1,rechterarm:1,linkesbein:2,rechtesbein:2};
-  const COMBAT_META = {
-    'Anderthalbhänder':{abbr:'An',ebe:'BE-2',offset:2}, 'Armbrust':{abbr:'Ar',ebe:'BE-5',offset:5},
-    'Belagerungswaffen':{abbr:'Bw',ebe:'BE-5',offset:5}, 'Bogen':{abbr:'Bo',ebe:'BE-3',offset:3},
-    'Diskus':{abbr:'Di',ebe:'BE-2',offset:2}, 'Dolche':{abbr:'Do',ebe:'BE-1',offset:1},
-    'Fechtwaffen':{abbr:'Fe',ebe:'BE-1',offset:1}, 'Hiebwaffen':{abbr:'Hi',ebe:'BE-4',offset:4},
-    'Infanteriewaffen':{abbr:'In',ebe:'BE-3',offset:3}, 'Kettenwaffen':{abbr:'Ke',ebe:'BE-3',offset:3},
-    'Lanzenreiten':{abbr:'La',ebe:'BE-3',offset:3}, 'Raufen':{abbr:'Ra',ebe:'BE',offset:0},
-    'Ringen':{abbr:'Ri',ebe:'BE',offset:0}, 'Schleuder':{abbr:'Sl',ebe:'BE-2',offset:2},
-    'Schwerter':{abbr:'Sc',ebe:'BE-2',offset:2}, 'Speere':{abbr:'Sp',ebe:'BE-3',offset:3},
-    'Stäbe':{abbr:'St',ebe:'BE-2',offset:2}, 'Säbel':{abbr:'Sä',ebe:'BE-2',offset:2},
-    'Wurfbeile':{abbr:'Wb',ebe:'BE-3',offset:3}, 'Wurfmesser':{abbr:'Wm',ebe:'BE-3',offset:3},
-    'Wurfspeere':{abbr:'Ws',ebe:'BE-2',offset:2}, 'Zweihandhiebwaffen':{abbr:'Zh',ebe:'BE-3',offset:3},
-    'Zweihandschwerter/-säbel':{abbr:'Zs',ebe:'BE-2',offset:2}
+  const COMBAT_UI_META = {
+    'Anderthalbhänder':{abbr:'An'},'Armbrust':{abbr:'Ar'},'Belagerungswaffen':{abbr:'Bw'},'Blasrohr':{abbr:'Bl'},'Bogen':{abbr:'Bo'},
+    'Diskus':{abbr:'Di'},'Dolche':{abbr:'Do'},'Fechtwaffen':{abbr:'Fe'},'Hiebwaffen':{abbr:'Hi'},'Infanteriewaffen':{abbr:'In'},
+    'Kettenstäbe':{abbr:'Ks'},'Kettenwaffen':{abbr:'Ke'},'Lanzenreiten':{abbr:'La'},'Peitsche':{abbr:'Pe'},'Raufen':{abbr:'Ra'},
+    'Ringen':{abbr:'Ri'},'Säbel':{abbr:'Sä'},'Schleuder':{abbr:'Sl'},'Schwerter':{abbr:'Sc'},'Speere':{abbr:'Sp'},'Stäbe':{abbr:'St'},
+    'Wurfbeile':{abbr:'Wb'},'Wurfmesser':{abbr:'Wm'},'Wurfspeere':{abbr:'Ws'},'Zweihandflegel':{abbr:'Zf'},
+    'Zweihand-Hiebwaffen':{abbr:'Zh'},'Zweihandschwerter/-säbel':{abbr:'Zs'}
   };
+  const COMBAT_TALENT_NAMES=new Set(HeldenMobilDsa41CombatTalents.COMBAT_TALENTS.flatMap(x=>[x.name,...x.aliases]));
 
   const TALENT_GROUPS = [
-    ['Kampf', new Set([...Object.keys(COMBAT_META),'Bastardstäbe','Blasrohr','Kettenstäbe','Peitsche','Stangenwaffen','Zweihandflegel'])],
+    ['Kampf', new Set([...COMBAT_TALENT_NAMES,'Bastardstäbe','Stangenwaffen'])],
     ['Körperlich', new Set(['Akrobatik','Athletik','Fliegen','Gaukeleien','Klettern','Körperbeherrschung','Reiten','Schleichen','Schwimmen','Selbstbeherrschung','Sich verstecken','Singen','Sinnenschärfe','Skifahren','Stimmen imitieren','Tanzen','Taschendiebstahl','Zechen'])],
     ['Gesellschaftlich', new Set(['Betören','Etikette','Gassenwissen','Lehren','Menschenkenntnis','Schauspielerei','Schriftlicher Ausdruck','Sich verkleiden','Überreden','Überzeugen'])],
     ['Natur', new Set(['Fallenstellen','Fallen stellen','Fesseln/Entfesseln','Fischen/Angeln','Fährtensuchen','Orientierung','Wettervorhersage','Wildnisleben'])],
@@ -420,7 +415,8 @@
     const value=Math.max(0,base-setBE);parts.push(`BE −${setBE}`);
     return {value,base,parts};
   }
-  function combatEbe(talent,be){return HeldenMobilCombat.combatEbe(talent,be,COMBAT_META);}
+  function combatEbe(talent,be){const value=HeldenMobilDsa41CombatTalents.encumbrancePenalty(talent,be);return value==null?Number(be||0):value;}
+  function combatEbeLabel(talent){return HeldenMobilDsa41CombatTalents.getCombatTalentDefinition(talent)?.encumbranceRule||'–';}
   function adjustCombatForBE(at,pa,ebe){return HeldenMobilCombat.adjustCombatForBE(at,pa,ebe);}
   function hasMatchingSpec(talent,base){return (state.current.talentSpecs.get(talent)||[]).some(s=>s===base||base.includes(s)||s.includes(base));}
   function itemMeleeData(e){
@@ -588,10 +584,10 @@
     const summary=[{l:'AT-Basis',v:currentAttr(pm,'at')},{l:'PA-Basis',v:currentAttr(pm,'pa')},{l:'FK-Basis',v:currentAttr(pm,'fk')},{l:'INI-Basis',v:currentAttr(pm,'ini')},{l:'INI aktuell',v:iniShown,n:iniDetail},{l:'GS',v:speed.value,n:speed.parts.join(' · ')},{l:'gBE',v:armor.be,n:`Roh-gBE ${armor.baseBE}${armor.beReduction?` · Rüstungsgewöhnung −${armor.beReduction}`:''}`}];
     $('#combatSummary').innerHTML=summary.map(x=>`<div class="combat-metric"><span>${x.l}</span><strong>${x.v}</strong>${x.n?`<small>${esc(x.n)}</small>`:''}</div>`).join('');
 
-    $('#meleeBody').innerHTML=meleeRows.map(({e,v},idx)=>{const d=v.data,meta=COMBAT_META[v.tal]||{},suffix=e.shieldIndex?` (S${e.shieldIndex})`:'',desc=e.descriptor?` · ${e.descriptor}`:'',refs=registerCombatWeaponRolls(`table:${set.id}:melee:${idx}`,e,v,armor);return `<tr><td><strong>${esc(e.name+suffix)}</strong><div class="cell-sub">${esc(desc.replace(/^ · /,''))}</div></td><td>${esc(meta.abbr||v.tal||'–')} / ${esc(meta.ebe||'–')}</td><td>${esc(d.dk||'–')}</td><td>${esc(diceText(d.tp))}</td><td>${esc(d.tpkk?d.tpkk.join(' / '):'–')}</td><td class="num">${d.ini??'–'}</td><td>${esc(`${signed(d.wm?.[0]||0)} / ${signed(d.wm?.[1]||0)}`)}</td><td class="num hot rollable" data-roll-ref="${refs.atRef}">${v.at??'–'}</td><td class="num hot rollable" data-roll-ref="${refs.paRef}">${v.pa??'–'}</td><td class="rollable" data-roll-ref="${refs.tpRef}">${esc(diceText(v.tp))}</td><td class="num">${d.bf??'–'}</td></tr>`;}).join('')||'<tr><td colspan="11" class="empty">Keine Nahkampfwaffen</td></tr>';
+    $('#meleeBody').innerHTML=meleeRows.map(({e,v},idx)=>{const d=v.data,meta=COMBAT_UI_META[v.tal]||{},suffix=e.shieldIndex?` (S${e.shieldIndex})`:'',desc=e.descriptor?` · ${e.descriptor}`:'',refs=registerCombatWeaponRolls(`table:${set.id}:melee:${idx}`,e,v,armor);return `<tr><td><strong>${esc(e.name+suffix)}</strong><div class="cell-sub">${esc(desc.replace(/^ · /,''))}</div></td><td>${esc(meta.abbr||v.tal||'–')} / ${esc(combatEbeLabel(v.tal))}</td><td>${esc(d.dk||'–')}</td><td>${esc(diceText(d.tp))}</td><td>${esc(d.tpkk?d.tpkk.join(' / '):'–')}</td><td class="num">${d.ini??'–'}</td><td>${esc(`${signed(d.wm?.[0]||0)} / ${signed(d.wm?.[1]||0)}`)}</td><td class="num hot rollable" data-roll-ref="${refs.atRef}">${v.at??'–'}</td><td class="num hot rollable" data-roll-ref="${refs.paRef}">${v.pa??'–'}</td><td class="rollable" data-roll-ref="${refs.tpRef}">${esc(diceText(v.tp))}</td><td class="num">${d.bf??'–'}</td></tr>`;}).join('')||'<tr><td colspan="11" class="empty">Keine Nahkampfwaffen</td></tr>';
 
     const ranged=set.entries.filter(e=>e.type==='ranged').map(e=>({e,v:rangedValues(e,armor.be)}));
-    $('#rangedBody').innerHTML=ranged.map(({e,v},idx)=>{const r=v.ref,m=COMBAT_META[v.tal]||{},fkRef=registerRoll(`table:${set.id}:ranged:${idx}:fk`,{type:'d20',title:`Fernkampf – ${e.name}`,subtitle:`FK ${v.fk}`,target:v.fk,targetLabel:'FK'}),tp=finalDamage(r.tp,r.tpkk),tpRef=registerRoll(`table:${set.id}:ranged:${idx}:tp`,{type:'damage',title:`Trefferpunkte – ${e.name}`,subtitle:diceText(tp),dice:tp,weapon:e.name,withZone:true});return `<tr><td><strong>${esc(e.name)}</strong></td><td>${esc(m.abbr||v.tal||'–')} / ${esc(m.ebe||'–')}</td><td class="rollable" data-roll-ref="${tpRef}">${esc(diceText(tp))}</td><td>${esc(r.ranges?r.ranges.join(' / '):'–')}</td><td>${esc(r.rangeTp?r.rangeTp.join(' / '):'–')}</td><td class="num hot rollable" data-roll-ref="${fkRef}">${v.fk}</td><td>${ammoFor(e.base)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Keine Fernkampfwaffen</td></tr>';
+    $('#rangedBody').innerHTML=ranged.map(({e,v},idx)=>{const r=v.ref,m=COMBAT_UI_META[v.tal]||{},fkRef=registerRoll(`table:${set.id}:ranged:${idx}:fk`,{type:'d20',title:`Fernkampf – ${e.name}`,subtitle:`FK ${v.fk}`,target:v.fk,targetLabel:'FK'}),tp=finalDamage(r.tp,r.tpkk),tpRef=registerRoll(`table:${set.id}:ranged:${idx}:tp`,{type:'damage',title:`Trefferpunkte – ${e.name}`,subtitle:diceText(tp),dice:tp,weapon:e.name,withZone:true});return `<tr><td><strong>${esc(e.name)}</strong></td><td>${esc(m.abbr||v.tal||'–')} / ${esc(combatEbeLabel(v.tal))}</td><td class="rollable" data-roll-ref="${tpRef}">${esc(diceText(tp))}</td><td>${esc(r.ranges?r.ranges.join(' / '):'–')}</td><td>${esc(r.rangeTp?r.rangeTp.join(' / '):'–')}</td><td class="num hot rollable" data-roll-ref="${fkRef}">${v.fk}</td><td>${ammoFor(e.base)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">Keine Fernkampfwaffen</td></tr>';
 
     $('#unarmedBody').innerHTML=unarmedRows(armor.be).map((r,idx)=>{const at=registerRoll(`table:${set.id}:unarmed:${idx}:at`,{type:'d20',title:`Attacke – ${r.name}`,subtitle:`AT ${r.at}`,target:r.at,targetLabel:'AT'}),pa=registerRoll(`table:${set.id}:unarmed:${idx}:pa`,{type:'d20',title:`Parade – ${r.name}`,subtitle:`PA ${r.pa}`,target:r.pa,targetLabel:'PA'}),tpDice=[1,6,Number((r.tp.match(/[+-]\d+$/)||['0'])[0])],tp=registerRoll(`table:${set.id}:unarmed:${idx}:tp`,{type:'damage',title:`Trefferpunkte – ${r.name}`,subtitle:r.tp,dice:tpDice,weapon:r.name});return `<tr><td>${esc(r.name)}</td><td>${r.tpkk}</td><td>${r.ini}</td><td class="num hot rollable" data-roll-ref="${at}">${r.at}</td><td class="num hot rollable" data-roll-ref="${pa}">${r.pa}</td><td class="rollable" data-roll-ref="${tp}">${r.tp}</td></tr>`;}).join('')||'<tr><td colspan="6" class="empty">–</td></tr>';
 
@@ -602,7 +598,7 @@
     const wd=woundData(),basis=deriveBasis(h.props),emap=new Map(basis.map(x=>[x.name,x.value]));const energy=['LeP','AuP','AsP','KaP'].filter(n=>emap.has(n)).map(n=>{const v=emap.get(n);return `<tr><td>${n}</td><td class="num hot">${v}</td><td class="num">${Math.floor(v/2)}</td><td class="num">${Math.floor(v/3)}</td><td class="num">${Math.floor(v/4)}</td></tr>`;}).join('');$('#energyBody').innerHTML=energy||'<tr><td colspan="5" class="empty">–</td></tr>';$('#woundThreshold').textContent=wd.threshold;
     const z=armor.zones;$('#zoneBody').innerHTML=`<tr><td>${z.kopf}</td><td>${z.brust}</td><td>${z.ruecken}</td><td>${z.bauch}</td><td>${z.linkerarm}</td><td>${z.rechterarm}</td><td>${z.linkesbein}</td><td>${z.rechtesbein}</td><td class="hot">${armor.rs}</td><td class="hot">${armor.be}</td></tr>${armor.unknown.length?`<tr><td colspan="10" class="empty">Keine Referenzdaten für: ${esc(armor.unknown.join(', '))}</td></tr>`:''}`;
     $('#armorBody').innerHTML=armor.pieces.map(p=>`<tr><td>${esc(p.name)}${p.stars?`<div class="cell-sub">${'★'.repeat(Math.min(5,p.stars))}</div>`:''}</td><td class="num">${p.rs??'–'}</td><td class="num">${p.be??'–'}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">Keine Rüstung</td></tr>';
-    const combatSf=h.sf.filter(x=>COMBAT_SF.has(x)),man=h.sf.filter(x=>MANEUVER_SF.has(x)),specs=[];for(const [tal,list] of h.talentSpecs.entries())if(COMBAT_META[tal])for(const sp of list)specs.push(`${tal} (${sp})`);$('#combatSf').innerHTML=chips(combatSf);$('#combatSpecs').innerHTML=chips(specs);$('#combatManeuvers').innerHTML=chips(man);
+    const combatSf=h.sf.filter(x=>COMBAT_SF.has(x)),man=h.sf.filter(x=>MANEUVER_SF.has(x)),specs=[];for(const [tal,list] of h.talentSpecs.entries())if(HeldenMobilDsa41CombatTalents.getCombatTalentDefinition(tal))for(const sp of list)specs.push(`${tal} (${sp})`);$('#combatSf').innerHTML=chips(combatSf);$('#combatSpecs').innerHTML=chips(specs);$('#combatManeuvers').innerHTML=chips(man);
   }
 
 
@@ -974,7 +970,7 @@
     if(!set)return {value:armor.be,talent:'',offset:0};
     const meleeRows=set.entries.filter(e=>e.type==='melee').map(e=>({e,v:meleeValues(e,armor.be)})),loadouts=buildCombatLoadouts(set,armor.be,meleeRows),active=activeLoadout(set,loadouts);
     const talent=active?.main?(active.main.talent||itemMeleeData(active.main).talent||''):'';
-    return {value:talent?combatEbe(talent,armor.be):armor.be,talent,offset:COMBAT_META[talent]?.offset||0};
+    return {value:talent?combatEbe(talent,armor.be):armor.be,talent};
   }
   function renderDashboardBody(){
     if(!state.current||!$('#dashboardBodyImage'))return;const {set,armor,speed}=dashboardArmor(),s=activeAdventureStatus();if(s)normalizeStatusWounds(s);const zones=s?.woundZones||blankWoundZones(),img=$('#dashboardBodyImage'),female=state.current.gender==='female';
