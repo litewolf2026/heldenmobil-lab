@@ -11,12 +11,12 @@
   const AVAILABILITY=Object.freeze({AVAILABLE:'available',UNACTIVATED_SPECIAL:'unactivated-special',BASIC_VALUE_MISSING:'basic-value-missing',UNKNOWN_TALENT:'unknown-talent'});
   const ATTRIBUTES=new Set(['MU','KL','IN','CH','FF','GE','KO','KK']);
 
-  const n=(value,label)=>{const out=Number(value);if(!Number.isFinite(out))throw new TypeError(\`\${label} must be finite\`);return out;};
+  const n=(value,label)=>{const out=Number(value);if(!Number.isFinite(out))throw new TypeError(`${label} must be finite`);return out;};
   const norm=(value)=>String(value??'').trim().toLocaleLowerCase('de-DE');
   const list=(value)=>Array.isArray(value)?value:[];
   function attributeTriplet(values,label='attributes'){
-    if(!Array.isArray(values)||values.length!==3)throw new TypeError(\`\${label} must contain exactly three attribute keys\`);
-    return values.map((value,index)=>{const key=String(value||'').trim().toUpperCase();if(!ATTRIBUTES.has(key))throw new RangeError(\`\${label}[\${index}] is not a DSA attribute key\`);return key;});
+    if(!Array.isArray(values)||values.length!==3)throw new TypeError(`${label} must contain exactly three attribute keys`);
+    return values.map((value,index)=>{const key=String(value||'').trim().toUpperCase();if(!ATTRIBUTES.has(key))throw new RangeError(`${label}[${index}] is not a DSA attribute key`);return key;});
   }
   function probeAttributeKeys(probe){
     const keys=(String(probe||'').toUpperCase().match(/MU|KL|IN|CH|FF|GE|KO|KK/g)||[]).slice(0,3);
@@ -33,15 +33,15 @@
   // TALENT-A intentionally contains only the core exploration slice needed to prove
   // catalogue semantics. The full WdS catalogue remains TALENT-E scope.
   const CORE_TALENTS=Object.freeze([
-    freezeDefinition({name:'Sinnenschärfe',aliases:['Sinnesschärfe'],type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','IN']}),
-    freezeDefinition({name:'Klettern',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','GE','KK'],encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:5},{talent:'Körperbeherrschung',penalty:10}]}),
-    freezeDefinition({name:'Körperbeherrschung',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','IN','GE'],encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:10}]}),
+    freezeDefinition({name:'Sinnensch\u00e4rfe',aliases:['Sinnessch\u00e4rfe'],type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','IN']}),
+    frezeDefinition({name:'Klettern',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','GE'l'KK']},encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:5},{talent:'K\u00f6rperbeherrschung',penalty:10}]}),
+    freezeDefinition({name:'K\u00f6rperbeherrschung',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','IN','GE'],encumbranceRule:'BE*2',substitutes:[{talent:'Akrobatik',penalty:5},{talent:'Athletik',penalty:10}]}),
     freezeDefinition({name:'Schleichen',type:TALENT_TYPE.BASIC,defaultAttributes:['MU','IN','GE'],encumbranceRule:'BE'}),
-    freezeDefinition({name:'Fährtensuchen',type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','KO']}),
+    freezeDefinition({name:'F\u00e4hrtensuchen',type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','KO']}),
     freezeDefinition({name:'Orientierung',type:TALENT_TYPE.BASIC,defaultAttributes:['KL','IN','IN'],substitutes:[{talent:'Sternkunde',penalty:10}]}),
     freezeDefinition({name:'Mechanik',type:TALENT_TYPE.SPECIAL,defaultAttributes:['KL','KL','FF']}),
     freezeDefinition({name:'Feinmechanik',type:TALENT_TYPE.SPECIAL,defaultAttributes:['KL','FF','FF']}),
-    freezeDefinition({name:'Schlösser Knacken',type:TALENT_TYPE.SPECIAL,defaultAttributes:['IN','FF','FF'],substitutes:[{talent:'Feinmechanik',penalty:5}]})
+    freezeDefinition({name:'Schl\u00f6sser Knacken',type:TALENT_TYPE.SPECIAL,defaultAttributes:['IN','FF','FF'],substitutes:[{talent:'Feinmechanik',penalty:5}]})
   ]);
 
   function getTalentDefinition(name,catalog=CORE_TALENTS){
@@ -69,7 +69,7 @@
     match=text.match(/^BE-(\d+(?:[.,]\d+)?)$/);if(match)return Math.max(0,base-Number(match[1].replace(',','.')));
     match=text.match(/^BE\+(\d+(?:[.,]\d+)?)$/);if(match)return base+Number(match[1].replace(',','.'));
     if(/^\d+(?:[.,]\d+)?$/.test(text))return Number(text.replace(',','.'));
-    throw new RangeError(\`unsupported encumbrance rule: \${rule}\`);
+    throw new RangeError(`unsupported encumbrance rule: ${rule}`);
   }
   function specializationBonus(talent,requestedSpecialization){
     const wanted=norm(requestedSpecialization);if(!wanted)return 0;
@@ -82,7 +82,7 @@
   }
   function attributeValues(attributes,keys){
     if(!attributes||typeof attributes!=='object')throw new TypeError('hero attributes are required');
-    return keys.map(key=>n(attributes[key],\`attribute \${key}\`));
+    return keys.map(key=>n(attributes[key],`attribute ${key}`));
   }
   function resolveTalentCheck({talent,heroAttributes,modifier=0,be=0,attributeOverride=null,specialization=null,rolls,catalog=CORE_TALENTS}={}){
     if(!talent||typeof talent!=='object')throw new TypeError('activated talent record is required');
