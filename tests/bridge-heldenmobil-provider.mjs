@@ -16,7 +16,8 @@ const hero={
     {name:'Klettern',probe:'MU/GE/KK',value:8,be:'BE*2',specs:['Seilklettern']},
     {name:'Feinmechanik',probe:'KL/FF/FF',value:9,be:'-',specs:['Schlösser']},
     {name:'Schlösser Knacken',probe:'IN/FF/FF',value:-1,be:'-',specs:[]},
-    {name:'Kochen',probe:'KL/IN/FF',value:5,be:'-',specs:[]}
+    {name:'Kochen',probe:'KL/IN/FF',value:5,be:'-',specs:[]},
+    {name:'Unbekanntes Haustalent',probe:'KL/IN/FF',value:5,be:'-',specs:[]}
   ],
   spells:[{name:'Odem Arcanum',probe:'KL/IN/IN',value:9,rep:'Mag',column:'A'}],
   liturgyKnowledges:[{name:'Liturgiekenntnis (Phex)',probe:'MU/IN/CH',value:10}],
@@ -109,7 +110,7 @@ result=provider.executeCheck(request);
 eq([result.status,result.outcome,result.meta.substitutions],[ 'unsupported','special-talent-negative',[{talent:'Feinmechanik',penalty:5}]],'negative special talent is blocked while substitution options are only reported');
 
 request=contract.checkRequestV1({
-  requestId:'tb1-unknown-model',heroId:'hero-live-1',check:{kind:'talent',key:'Kochen'},modifier:0,
+  requestId:'tb1-unknown-model',heroId:'hero-live-1',check:{kind:'talent',key:'Unbekanntes Haustalent'},modifier:0,
   context:{talent:{ruleProfile:'dsa41-v1'}}
 });
 result=provider.executeCheck(request);

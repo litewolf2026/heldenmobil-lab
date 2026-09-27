@@ -57,7 +57,11 @@
   }
   function heroAttributeRecord(hero){const out={};for(const short of Object.keys(SHORT_TO_FULL))out[short]=shortValue(hero,short);return out;}
   function substitutionMeta(name,hero){
-    return talents.substitutionOptions({name,heroTalents:hero?.talents||[]}).map(option=>({talent:option.talent.name,penalty:option.penalty}));
+    return talents.substitutionOptions({name,heroTalents:hero?.talents||[]}).map(option=>({
+      talent:option.talent.name,penalty:option.penalty,
+      ...(option.specialization?{specialization:option.specialization}:{}),
+      ...(option.condition?{condition:option.condition}:{})
+    }));
   }
 
   function createProvider({getHeroes,getEnergyState=defaultEnergyState,getCombatState=defaultCombatState,rollDie}={}){
@@ -90,8 +94,10 @@
       return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:request.check.kind,status:'unsupported',success:null,outcome,modifiers:request.modifiers,meta});
     }
     function executeDsa41TalentCheck(request,hero){
+      if(String(request.check.mode).trim().toUpperCase()==='EXTENDED')return unsupported(request,'talent-check-mode-unsupported',{ruleProfile:TALENT_RULE_PROFILE});
       const definition=talents.getTalentDefinition(request.check.key);
       if(!definition)return unsupported(request,'talent-definition-unavailable',{ruleProfile:TALENT_RULE_PROFILE,substitutions:[]});
+      if(definition.resolutionMode!==talents.RESOLUTION_MODE.TALENT)return unsupported(request,'talent-resolution-mode-unsupported',{ruleProfile:TALENT_RULE_PROFILE,resolutionMode:definition.resolutionMode});
       const substitutions=substitutionMeta(request.check.key,hero);
       const availability=talents.talentAvailability({name:request.check.key,heroTalents:hero.talents||[]});
       if(availability.status===talents.AVAILABILITY.UNACTIVATED_SPECIAL)return unsupported(request,'special-talent-unactivated',{ruleProfile:TALENT_RULE_PROFILE,substitutions});
