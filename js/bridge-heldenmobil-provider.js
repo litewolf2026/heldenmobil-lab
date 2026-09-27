@@ -104,6 +104,12 @@
         if(!Number.isFinite(Number(combat.be)))return unsupported(request,'encumbrance-state-unavailable',{ruleProfile:TALENT_RULE_PROFILE,encumbranceRule:rule,substitutions});
         be=Number(combat.be);
       }
+      try{
+        talents.resolveAttributeKeys({talent:ability,definition,override:context.attributeOverride??null});
+        talents.encumbrancePenalty(rule,be);
+      }catch(error){
+        return unsupported(request,'talent-context-invalid',{ruleProfile:TALENT_RULE_PROFILE,message:error?.message||String(error),substitutions});
+      }
       const rolls=[d20(),d20(),d20()];
       let resolved;
       try{
