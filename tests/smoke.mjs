@@ -25,6 +25,7 @@ ok(app.includes("lastQualityAudit={version:'20.3.2'"), 'quality audit JSON versi
 ok(app.includes("cloudState.conflictHeroKey===key&&!force"), 'unresolved OneDrive conflict must block automatic save');
 ok(app.includes("COMPANION_BACKUP_DB='HeldenMobilLabBackups'") && app.includes('indexedDB.open'), 'IndexedDB companion snapshot storage missing');
 ok(app.includes('COMPANION_BACKUP_LIMIT=5'), 'backup history must be limited to five snapshots');
+ok(app.includes("'check:talent-context:v1'"), 'live bridge must allow the talent-context capability');
 ok(index.includes('id="backupRestore"') && index.includes('id="backupExport"'), 'backup restore/export UI missing');
 ok(app.includes('Letzter erfolgreicher OneDrive-Sync:'), 'last successful sync timestamp missing');
 ok(vendor.includes('JSZip v3.10.1'), 'wrong JSZip vendor payload');
