@@ -1382,7 +1382,7 @@ if(typeof HeldenMobilBridgeProviderV1!=='undefined'&&typeof HeldenMobilBrowserBr
   });
   window.HeldenMobilBridgeSessionV1=HeldenMobilBrowserBridgeV1.installWindowBridge({
     allowedOrigins:[window.location.origin],
-    allowedCapabilities:['hero:list','hero:snapshot:v1','check:execute:v1'],
+    allowedCapabilities:['hero:list','hero:snapshot:v1','check:execute:v1','check:talent-context:v1'],
     provider:bridgeProvider,
     sourceGuard:bridgeSourceGuard
   });

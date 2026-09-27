@@ -13,6 +13,7 @@
     HERO_LIST:'hero:list',
     HERO_SNAPSHOT:'hero:snapshot:v1',
     CHECK_EXECUTE:'check:execute:v1',
+    TALENT_CONTEXT:'check:talent-context:v1',
     COMBAT_EXECUTE:'combat:execute:v1'
   });
   const TYPE_CAPABILITY=Object.freeze({
@@ -38,6 +39,7 @@
     if(typeof provider.listHeroes==='function')supported.push(CAPABILITIES.HERO_LIST);
     if(typeof provider.getHeroSnapshot==='function')supported.push(CAPABILITIES.HERO_SNAPSHOT);
     if(typeof provider.executeCheck==='function')supported.push(CAPABILITIES.CHECK_EXECUTE);
+    if(typeof provider.executeCheck==='function'&&Array.isArray(provider.bridgeCapabilities)&&provider.bridgeCapabilities.includes(CAPABILITIES.TALENT_CONTEXT))supported.push(CAPABILITIES.TALENT_CONTEXT);
     if(typeof provider.executeCombat==='function')supported.push(CAPABILITIES.COMBAT_EXECUTE);
     return supported.filter(capability=>allowed.has(capability)).sort();
   }

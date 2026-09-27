@@ -10,7 +10,7 @@ const vendor = fs.readFileSync('vendor/jszip-3.10.1.min.js', 'utf8');
 
 function ok(condition, message) { if (!condition) throw new Error(message); }
 
-const order = ['vendor/jszip-3.10.1.min.js','js/hld-parser.js','js/companion-core.js','js/combat-core.js','js/app.js'].map(x=>index.indexOf(`<script src="${x}"></script>`));
+const order = ['vendor/jszip-3.10.1.min.js','js/hld-parser.js','js/companion-core.js','js/combat-core.js','js/dsa41/check-core.js','js/dsa41/talent-core.js','js/dsa41/magic-core.js','js/bridge-contract-v1.js','js/bridge-browser-adapter.js','js/bridge-heldenmobil-provider.js','js/app.js'].map(x=>index.indexOf(`<script src="${x}"></script>`));
 ok(order.every(x=>x>=0) && order.every((x,i)=>i===0||x>order[i-1]), 'core scripts must load before app.js');
 ok(!index.includes('JSZip v3.10.1 - A JavaScript class'), 'JSZip must stay external');
 ok(index.includes('Beta v20.3.2'), 'visible version badge must be v20.3.2');
@@ -25,6 +25,7 @@ ok(app.includes("lastQualityAudit={version:'20.3.2'"), 'quality audit JSON versi
 ok(app.includes("cloudState.conflictHeroKey===key&&!force"), 'unresolved OneDrive conflict must block automatic save');
 ok(app.includes("COMPANION_BACKUP_DB='HeldenMobilLabBackups'") && app.includes('indexedDB.open'), 'IndexedDB companion snapshot storage missing');
 ok(app.includes('COMPANION_BACKUP_LIMIT=5'), 'backup history must be limited to five snapshots');
+ok(app.includes("'check:talent-context:v1'"), 'live bridge must allow the talent-context capability');
 ok(index.includes('id="backupRestore"') && index.includes('id="backupExport"'), 'backup restore/export UI missing');
 ok(app.includes('Letzter erfolgreicher OneDrive-Sync:'), 'last successful sync timestamp missing');
 ok(vendor.includes('JSZip v3.10.1'), 'wrong JSZip vendor payload');

@@ -16,6 +16,7 @@ throws(()=>browserBridge.createBridgeServer({allowedOrigins:['https://maze.examp
 
 let listCalls=0,getCalls=0,checkCalls=0,combatCalls=0;
 const provider={
+  bridgeCapabilities:['check:talent-context:v1'],
   listHeroes:async()=>{listCalls++;return [{heroId:fixture.hero.heroId,name:fixture.hero.name,capabilities:fixture.hero.capabilities}];},
   getHeroSnapshot:async heroId=>{getCalls++;if(heroId!==fixture.hero.heroId)throw new Error('hero not found');return fixture.hero;},
   executeCheck:async request=>{checkCalls++;return {...fixture.checkResult,requestId:request.requestId,heroId:request.heroId};},
@@ -23,7 +24,7 @@ const provider={
 };
 const server=browserBridge.createBridgeServer({allowedOrigins:['https://maze.example'],provider});
 
-eq(server.capabilities(),['check:execute:v1','combat:execute:v1','hero:list','hero:snapshot:v1'],'provider capabilities are explicit and sorted');
+eq(server.capabilities(),['check:execute:v1','check:talent-context:v1','combat:execute:v1','hero:list','hero:snapshot:v1'],'provider capabilities are explicit and sorted');
 
 let src=source();let ev=event({origin:'https://evil.example',sourceRef:src});let handled=await server.handleMessage(ev);
 eq([handled.handled,handled.reason,src.calls.length,listCalls],[false,'origin-rejected',0,0],'untrusted origin is silently ignored');
@@ -33,9 +34,9 @@ const sourceLocked=browserBridge.createBridgeServer({allowedOrigins:['https://ma
 ev=event({sourceRef:otherSource});handled=await sourceLocked.handleMessage(ev);eq([handled.handled,handled.reason,otherSource.calls.length],[false,'source-rejected',0],'same-origin but wrong source window is rejected');
 ev=event({sourceRef:trustedSource});handled=await sourceLocked.handleMessage(ev);eq(handled.response.type,'bridge.hello.result','allowed source window passes second gate');
 
-src=source();ev=event({sourceRef:src,payload:{capabilities:['hero:list','check:execute:v1','unknown']}});handled=await server.handleMessage(ev);
+src=source();ev=event({sourceRef:src,payload:{capabilities:['hero:list','check:execute:v1','check:talent-context:v1','unknown']}});handled=await server.handleMessage(ev);
 eq(handled.response.type,'bridge.hello.result','hello succeeds');
-eq(handled.response.payload.capabilities,['check:execute:v1','hero:list'],'hello negotiates only available requested capabilities in canonical order');
+eq(handled.response.payload.capabilities,['check:execute:v1','check:talent-context:v1','hero:list'],'hello negotiates only available requested capabilities in canonical order');
 eq(src.calls[0].origin,'https://maze.example','reply uses exact incoming origin, never wildcard');
 
 src=source();ev=event({sourceRef:src,messageId:'m2',type:'hero.list'});handled=await server.handleMessage(ev);
