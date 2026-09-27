@@ -48,7 +48,8 @@
     return result.success?`Gelungen · ${result.points??0} ${unit}`:`Misslungen${result.outcome&&result.outcome!=='failure'?` · ${result.outcome}`:''}`;
   }
   function talentContext(request){return plain(request?.context?.talent)?request.context.talent:null;}
-  function usesTalentRuleProfile(request){return request?.check?.kind==='talent'&&talentContext(request)?.ruleProfile===TALENT_RULE_PROFILE;}
+  function requestedTalentRuleProfile(request){const value=talentContext(request)?.ruleProfile;return value==null?'':String(value).trim();}
+  function usesTalentRuleProfile(request){return request?.check?.kind==='talent'&&requestedTalentRuleProfile(request)===TALENT_RULE_PROFILE;}
   function encumbranceRuleFor(ability,definition){return String(ability?.be??'').trim()||(definition?.encumbranceRule??null);}
   function requiresEncumbrance(rule){
     const value=String(rule??'').trim().toUpperCase().replace(/\s+/g,'');
@@ -144,7 +145,11 @@
         const roll=d20(),base=propertyValue(hero,full),result=checks.checkAttribute({value:base,modifier:request.modifier,roll});
         return contract.checkResultV1({requestId:request.requestId,heroId:request.heroId,checkKind:kind,status:'resolved',success:result.success,outcome:result.success?'success':'failure',qualityPoints:null,rolls:[roll],targets:[result.target],effectiveValue:result.target,modifiers:request.modifiers,display:{summary:resultDisplay(kind,result)},meta:{baseValue:base}});
       }
-      if(usesTalentRuleProfile(request))return executeDsa41TalentCheck(request,hero);
+      if(kind==='talent'){
+        const requestedProfile=requestedTalentRuleProfile(request);
+        if(requestedProfile&&requestedProfile!==TALENT_RULE_PROFILE)return unsupported(request,'talent-rule-profile-unsupported',{requestedRuleProfile:requestedProfile,supportedRuleProfile:TALENT_RULE_PROFILE});
+        if(usesTalentRuleProfile(request))return executeDsa41TalentCheck(request,hero);
+      }
       if(kind==='talent'||kind==='spell'||kind==='liturgy'){
         const ability=findAbility(hero,kind,request.check.key);if(!ability)return unsupported(request,'ability-not-found');
         const attrs=abilityProbe(ability);if(attrs.length!==3)return unsupported(request,'probe-not-modelled');
