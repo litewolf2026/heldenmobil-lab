@@ -115,6 +115,15 @@ request=contract.checkRequestV1({
 result=provider.executeCheck(request);
 eq([result.status,result.outcome],['unsupported','talent-definition-unavailable'],'unmodelled talent never falls back to legacy resolver under dsa41-v1');
 
+request=contract.checkRequestV1({
+  requestId:'tb1-unknown-profile',heroId:'hero-live-1',check:{kind:'talent',key:'Sinnesschärfe'},modifier:0,
+  context:{talent:{ruleProfile:'dsa41-v2'}}
+});
+result=provider.executeCheck(request);
+eq([result.status,result.outcome,result.meta.requestedRuleProfile,result.meta.supportedRuleProfile],
+  ['unsupported','talent-rule-profile-unsupported','dsa41-v2','dsa41-v1'],
+  'unknown explicit talent rule profile fails closed without legacy fallback');
+
 const noBeProvider=providerApi.createProvider({
   getHeroes:()=>[hero],rollDie:()=>10,getCombatState:()=>({})
 });
