@@ -147,7 +147,7 @@ assert.deepEqual(byKey.get('language.garethi'),{key:'language.garethi',name:'Gar
 assert.deepEqual(byKey.get('script.kusliker-zeichen'),{key:'script.kusliker-zeichen',name:'Kusliker Zeichen',value:5,attributes:[],complexity:10});
 assert.equal(byKey.get('script.isdira').value,8);
 assert.equal(byKey.get('script.asdharia').complexity,18);
-assert.equal(byKey.get('Kochen').attributes.length,3);
+assert.equal(byKey.get('talent.kochen').attributes.length,3,'ordinary E1 snapshot now uses its stable talent.* key');
 assert.ok(!snapshot.talents.some(x=>x.key==='Sprachen kennen Garethi'),'raw proficiency must not remain a generic talent snapshot');
 assert.ok(!snapshot.talents.some(x=>/Wudu/.test(x.key)||/Wudu/.test(x.name)),'out-of-WdS proficiency is not projected as a generic 3W20 talent');
 
